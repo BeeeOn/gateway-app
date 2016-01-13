@@ -34,7 +34,7 @@ class HTTPClient {
 public:
 	HTTPClient(void);
 
-	std::vector<std::string> discoverNetworks();
+	std::vector<std::string> discoverDevices();
 
 	std::string sendRequest(std::string ip, std::string url = "/values.json");
 

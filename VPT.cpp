@@ -84,7 +84,7 @@ void VPTSensor::run(){
 void VPTSensor::detectDevices(void) {
 	log.information("VPT: Start device discovery");
 	uint32_t id;
-	vector<string> devices = http_client->discoverNetworks();
+	vector<string> devices = http_client->discoverDevices();
 	str_device device;
 	for ( vector<string>::iterator it = devices.begin(); it != devices.end(); it++ ) {
 		try {

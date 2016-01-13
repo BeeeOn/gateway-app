@@ -29,7 +29,7 @@ HTTPClient::HTTPClient(void) : log(Poco::Logger::get("Adaapp-VPT")) {
 	receiveTime = Poco::Timespan(RECEIVE_TIMEOUT, 0);
 }
 
-vector<string> HTTPClient::discoverNetworks(void) {
+vector<string> HTTPClient::discoverDevices(void) {
 	return detectNetworkDevices(detectNetworkInterfaces());
 }
 
