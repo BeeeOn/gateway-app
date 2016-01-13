@@ -97,23 +97,17 @@ void HTTPClient::checkIPAddresses(NetworkInterface::AddressList &iplist,
 }
 
 vector<pair<uint32_t, IPAddress>> HTTPClient::detectNetworkInterfaces(void) {
-	//Network Variables
 	log.information("HTTP: Detect network interfaces");
 	Poco::Net::NetworkInterface::NetworkInterfaceList list = Poco::Net::NetworkInterface::list(); ///< List of interfaces
 	vector<pair<uint32_t, IPAddress>> networks;
 
-	//Get networks range for search VPT
 	if ( !list.empty() ) {
-		//Check all interface
 		for(NetworkInterface::NetworkInterfaceList::const_iterator itr=list.begin(); itr!=list.end(); ++itr)
 		{
-			//Interface type can't be type
 			if (itr->isLoopback() || itr->isPointToPoint())
 				continue;
 
-			//Get IP address list for Interface
 			NetworkInterface::AddressList iplist = itr->addressList();
-			//Check all IP address
 			log.information("HTTP: Check interface: " + itr->adapterName());
 			checkIPAddresses(iplist, networks);
 		}
