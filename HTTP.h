@@ -48,6 +48,8 @@ private:
 
 
 
+	void checkIPAddresses(Poco::Net::NetworkInterface::AddressList &iplist,
+		std::vector<std::pair<uint32_t, Poco::Net::IPAddress>> &networks);
 	std::vector<std::string> detectNetworkDevices(std::vector<std::pair<uint32_t, Poco::Net::IPAddress>>);
 	std::vector<std::pair<uint32_t, Poco::Net::IPAddress>> detectNetworkInterfaces();
 
