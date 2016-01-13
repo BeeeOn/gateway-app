@@ -75,6 +75,15 @@ vector<string> HTTPClient::detectNetworkDevices(vector<pair<uint32_t, IPAddress>
 	return devices;
 }
 
+static inline uint32_t ipv4_to_mask_u32(const NetworkInterface::AddressTuple &a)
+{
+	IPAddress address = a.get<IP_ADDR>();
+	IPAddress mask = a.get<MASK_ADDR>();
+	struct in_addr *addr = (struct in_addr *) (address & mask).addr();
+
+	return (uint32_t) addr->s_addr;
+}
+
 void HTTPClient::checkIPAddresses(NetworkInterface::AddressList &iplist,
 	vector<pair<uint32_t, IPAddress>> &networks)
 {
@@ -85,8 +94,8 @@ void HTTPClient::checkIPAddresses(NetworkInterface::AddressList &iplist,
 		//Element have to be IPv4 and contains IP Address, Mask Address, BroadCast Address
 		if ((ip_itr->get<IP_ADDR>()).family() == Poco::Net::IPAddress::Family::IPv4 &&  ip_itr->length == 3 ) {
 			//Get Network IP address
-			uint32_t mask = help_mask = (uint32_t)((struct in_addr * )
-				(ip_itr->get<IP_ADDR>() & ip_itr->get<MASK_ADDR>()).addr())->s_addr;
+			uint32_t mask = ipv4_to_mask_u32(*ip_itr);
+			help_mask = mask;
 			//Get Broadcast IP address, Prefix less than 24 will be rounding to 24
 			for ( uint8_t i = 32, prefix = (uint8_t) (ip_itr->get<MASK_ADDR>()).prefixLength(), k = 1; prefix < i; i--, k = k<<1 ) {
 				ptr_ipv4bytes[FOUR_BYTE] = ptr_ipv4bytes[FOUR_BYTE] | k;
