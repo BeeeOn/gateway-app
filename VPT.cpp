@@ -82,7 +82,7 @@ void VPTSensor::run(){
 }
 
 void VPTSensor::detectDevices(void) {
-	log.information("VPT: Start detect devices on Network");
+	log.information("VPT: Start device discovery");
 	uint32_t id;
 	vector<string> devices = http_client->discoverNetworks();
 	str_device device;
@@ -97,7 +97,7 @@ void VPTSensor::detectDevices(void) {
 		}
 		catch ( ... ) { }
 	}
-	log.information("VPT: Stop detect devices on Network");
+	log.information("VPT: Stop device discovery");
 }
 
 bool VPTSensor::isVPTSensor(long long int sensor_id) {
