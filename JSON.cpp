@@ -26,7 +26,7 @@ JSONDevices::JSONDevices(void) : log(Poco::Logger::get("Adaapp-VPT")) {
 
 void JSONDevices::loadDeviceConfiguration(string device_name) {
 	string device_file = cfg->getString("devices."+device_name);
-	log.information("JSON: Start load device specification for " + device_name);
+	log.information("JSON: Loading device specification for " + device_name);
 	Poco::DynamicStruct jsonStruct = loadFile(devices_folder+device_file);
 	checkBaseFormat(jsonStruct);
 
@@ -43,7 +43,7 @@ void JSONDevices::loadDeviceConfiguration(string device_name) {
 		loadConverterConfiguration(jsonStruct, &device_struct);
 	}
 	devices.insert({device_name, device_struct});
-	log.information("JSON: End load device specification for " + device_name);
+	log.information("JSON: Successfully loaded device specification for " + device_name);
 }
 
 std::string JSONDevices::generateRequestURL(string device_name, int id, float value) {
