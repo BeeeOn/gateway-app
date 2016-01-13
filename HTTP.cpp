@@ -43,7 +43,6 @@ string HTTPClient::sendRequest(string ip, string url) {
 	request.setMethod(Poco::Net::HTTPRequest::HTTP_GET);
 	request.setURI(url);
 	log.information("HTTP: " + ip + ": " + url);
-	//Send requestuest for VPT values;
 	http.sendRequest(request);
 	istream & input = http.receiveResponse(response);
 	log.information("HTTP: Response status code: " + to_string(response.getStatus()));
