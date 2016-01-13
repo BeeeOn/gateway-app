@@ -58,7 +58,7 @@ void VPTSensor::run(){
 			try {
 				pair<bool, Command> response;
 				if (createMsg(device)) {
-					log.information("VPT: Send values to server");
+					log.information("VPT: Sending values to server");
 					response = agg->sendData(msg);
 					if (response.first) {
 						parseCmdFromServer(response.second);
