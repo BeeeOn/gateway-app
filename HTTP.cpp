@@ -84,23 +84,30 @@ static inline uint32_t ipv4_to_mask_u32(const NetworkInterface::AddressTuple &a)
 	return (uint32_t) addr->s_addr;
 }
 
+//Get Broadcast IP address, Prefix less than 24 will be rounding to 24
+static inline uint32_t ipv4_to_broadcast_u32(const NetworkInterface::AddressTuple &a)
+{
+	uint32_t addr = ipv4_to_mask_u32(a);
+	int prefix = a.get<MASK_ADDR>().prefixLength();
+	uint8_t *bytes = (uint8_t *) &addr;
+	int i;
+	int k;
+
+	for (i = 32, k = 1; prefix < i; i--, k <<= 1)
+		bytes[FOUR_BYTE] |= k;
+
+	return addr;
+}
+
 void HTTPClient::checkIPAddresses(NetworkInterface::AddressList &iplist,
 	vector<pair<uint32_t, IPAddress>> &networks)
 {
-	uint32_t help_mask; // Help variables for save IP address as 32-bit value
-	uint8_t * ptr_ipv4bytes = (uint8_t *) &help_mask; //Pointer on bytes IP Address
-
 	for(NetworkInterface::AddressList::const_iterator ip_itr=iplist.begin(); ip_itr != iplist.end(); ++ip_itr) {
 		//Element have to be IPv4 and contains IP Address, Mask Address, BroadCast Address
 		if ((ip_itr->get<IP_ADDR>()).family() == Poco::Net::IPAddress::Family::IPv4 &&  ip_itr->length == 3 ) {
-			//Get Network IP address
 			uint32_t mask = ipv4_to_mask_u32(*ip_itr);
-			help_mask = mask;
-			//Get Broadcast IP address, Prefix less than 24 will be rounding to 24
-			for ( uint8_t i = 32, prefix = (uint8_t) (ip_itr->get<MASK_ADDR>()).prefixLength(), k = 1; prefix < i; i--, k = k<<1 ) {
-				ptr_ipv4bytes[FOUR_BYTE] = ptr_ipv4bytes[FOUR_BYTE] | k;
-			}
-			networks.push_back({mask, IPAddress((struct in_addr *) &help_mask, sizeof(help_mask))});
+			uint32_t broadcast = ipv4_to_broadcast_u32(*ip_itr);
+			networks.push_back({mask, IPAddress((struct in_addr *) &broadcast, sizeof(broadcast))});
 		}
 	}
 }
