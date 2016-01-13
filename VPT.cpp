@@ -81,6 +81,16 @@ void VPTSensor::run(){
 	}
 }
 
+#define VPT_ID_PREFIX 0xa4000000
+#define VPT_ID_MASK   0x00ffffff
+
+uint32_t VPTSensor::parseDeviceId(string &content)
+{
+	string id = json->getParameterValuesFromContent("id", content);
+	uint32_t id32 = std::stoul(id.substr(5,11), nullptr, 16);
+	return VPT_ID_PREFIX | (id32 & VPT_ID_MASK);
+}
+
 void VPTSensor::detectDevices(void) {
 	log.information("VPT: Start device discovery");
 	uint32_t id;
@@ -89,7 +99,7 @@ void VPTSensor::detectDevices(void) {
 	for ( vector<string>::iterator it = devices.begin(); it != devices.end(); it++ ) {
 		try {
 			string content = http_client->sendRequest(*it);
-			id = (0xa4000000 | (std::stoul(json->getParameterValuesFromContent("id", content).substr(5,11), nullptr, 16) & 0x00FFFFFF));
+			id = parseDeviceId(content);
 			device.name = json->getParameterValuesFromContent("device", content);
 			device.ip = *it;
 			log.information("VPT: Detected device " + device.name + " with ip " + device.ip);
