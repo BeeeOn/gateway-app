@@ -89,23 +89,24 @@ vector<pair<uint32_t, IPAddress>> HTTPClient::detectNetworkInterfaces(void) {
 		for(NetworkInterface::NetworkInterfaceList::const_iterator itr=list.begin(); itr!=list.end(); ++itr)
 		{
 			//Interface type can't be type
-			if ( !itr->isLoopback() && !itr->isPointToPoint() ) {
-				//Get IP address list for Interface
-				NetworkInterface::AddressList iplist = itr->addressList();
-				//Check all IP address
-				for(NetworkInterface::AddressList::const_iterator ip_itr=iplist.begin(); ip_itr != iplist.end(); ++ip_itr) {
-					//Element have to be IPv4 and contains IP Address, Mask Address, BroadCast Address
-					log.information("HTTP: Check interface: " + itr->adapterName());
-					if ((ip_itr->get<IP_ADDR>()).family() == Poco::Net::IPAddress::Family::IPv4 &&  ip_itr->length == 3 ) {
-						//Get Network IP address
-						uint32_t mask = help_mask = (uint32_t)((struct in_addr * )
-							(ip_itr->get<IP_ADDR>() & ip_itr->get<MASK_ADDR>()).addr())->s_addr;
-						//Get Broadcast IP address, Prefix less than 24 will be rounding to 24
-						for ( uint8_t i = 32, prefix = (uint8_t) (ip_itr->get<MASK_ADDR>()).prefixLength(), k = 1; prefix < i; i--, k = k<<1 ) {
-							ptr_ipv4bytes[FOUR_BYTE] = ptr_ipv4bytes[FOUR_BYTE] | k;
-						}
-						networks.push_back({mask, IPAddress((struct in_addr *) &help_mask, sizeof(help_mask))});
+			if (itr->isLoopback() || itr->isPointToPoint())
+				continue;
+
+			//Get IP address list for Interface
+			NetworkInterface::AddressList iplist = itr->addressList();
+			//Check all IP address
+			for(NetworkInterface::AddressList::const_iterator ip_itr=iplist.begin(); ip_itr != iplist.end(); ++ip_itr) {
+				//Element have to be IPv4 and contains IP Address, Mask Address, BroadCast Address
+				log.information("HTTP: Check interface: " + itr->adapterName());
+				if ((ip_itr->get<IP_ADDR>()).family() == Poco::Net::IPAddress::Family::IPv4 &&  ip_itr->length == 3 ) {
+					//Get Network IP address
+					uint32_t mask = help_mask = (uint32_t)((struct in_addr * )
+						(ip_itr->get<IP_ADDR>() & ip_itr->get<MASK_ADDR>()).addr())->s_addr;
+					//Get Broadcast IP address, Prefix less than 24 will be rounding to 24
+					for ( uint8_t i = 32, prefix = (uint8_t) (ip_itr->get<MASK_ADDR>()).prefixLength(), k = 1; prefix < i; i--, k = k<<1 ) {
+						ptr_ipv4bytes[FOUR_BYTE] = ptr_ipv4bytes[FOUR_BYTE] | k;
 					}
+					networks.push_back({mask, IPAddress((struct in_addr *) &help_mask, sizeof(help_mask))});
 				}
 			}
 		}
