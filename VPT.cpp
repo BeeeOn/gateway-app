@@ -174,7 +174,8 @@ void VPTSensor::pairDevices(void) {
 		try {
 			json->loadDeviceConfiguration(device->second.name);
 		}
-		catch ( ... ) {
+		catch (Poco::Exception &e) {
+			log.error("VPT: " + e.displayText());
 		}
 	}
 }
