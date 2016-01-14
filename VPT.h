@@ -66,6 +66,7 @@ private:
 	void fetchAndSendMessage(std::map<uint32_t, str_device>::iterator &device);
 	void pairDevices();
 	uint32_t parseDeviceId(std::string &content);
+	void updateDeviceWakeUp(long long int euid, unsigned int time);
 };
 
 #endif

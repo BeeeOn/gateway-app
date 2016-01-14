@@ -124,16 +124,21 @@ bool VPTSensor::isVPTSensor(long long int sensor_id) {
 	return map_devices.find(sensor_id) != map_devices.end();
 }
 
+void VPTSensor::updateDeviceWakeUp(long long int euid, unsigned int time)
+{
+	if (sensor.euid == euid) {
+		if ( time < VPT_DEFAULT_WAKEUP_TIME ) {
+			wake_up_time = VPT_DEFAULT_WAKEUP_TIME;
+		}
+		else {
+			wake_up_time = time;
+		}
+	}
+}
+
 void VPTSensor::parseCmdFromServer(Command cmd){
 	if (cmd.state == "update") {
-		if (sensor.euid == cmd.euid) {
-			if ( cmd.time < VPT_DEFAULT_WAKEUP_TIME ) {
-				wake_up_time = VPT_DEFAULT_WAKEUP_TIME;
-			}
-			else {
-				wake_up_time = cmd.time;
-			}
-		}
+		updateDeviceWakeUp(cmd.euid, cmd.time);
 		return;
 	}
 	else if (cmd.state == "set") {
