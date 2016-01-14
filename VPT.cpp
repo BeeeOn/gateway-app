@@ -147,6 +147,17 @@ void VPTSensor::processCmdSet(Command cmd)
 	}
 }
 
+void VPTSensor::processCmdListen(void)
+{
+	try {
+		detectDevices();
+		pairDevices();
+	}
+	catch ( Poco::Exception & exc ) {
+		log.error("VPT: " + exc.displayText());
+	}
+}
+
 void VPTSensor::parseCmdFromServer(Command cmd){
 	if (cmd.state == "update") {
 		updateDeviceWakeUp(cmd.euid, cmd.time);
@@ -157,13 +168,7 @@ void VPTSensor::parseCmdFromServer(Command cmd){
 		return;
 	}
 	else if (cmd.state == "listen") {
-		try {
-			detectDevices();
-			pairDevices();
-		}
-		catch ( Poco::Exception & exc ) {
-			log.error("VPT: " + exc.displayText());
-		}
+		processCmdListen();
 		return;
 	}
 	log.error("Unexpected answer from server, received command: " + cmd.state);

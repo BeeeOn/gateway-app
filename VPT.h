@@ -68,6 +68,7 @@ private:
 	uint32_t parseDeviceId(std::string &content);
 	void updateDeviceWakeUp(long long int euid, unsigned int time);
 	void processCmdSet(Command cmd);
+	void processCmdListen(void);
 };
 
 #endif
