@@ -111,10 +111,7 @@ void VPTSensor::detectDevices(void) {
 }
 
 bool VPTSensor::isVPTSensor(long long int sensor_id) {
-	if ( map_devices.find(sensor_id) == map_devices.end() ) {
-		return false;
-	}
-	return true;
+	return map_devices.find(sensor_id) != map_devices.end();
 }
 
 void VPTSensor::parseCmdFromServer(Command cmd){
