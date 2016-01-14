@@ -20,7 +20,6 @@ VPTSensor::VPTSensor(IOTMessage _msg, shared_ptr<Aggregator> _agg) :
 	msg(_msg),
 	wake_up_time(15)
 {
-	log.setLevel("trace"); // set default lowest level
 	AutoPtr<IniFileConfiguration> cfg;
 	try {
 		cfg = new IniFileConfiguration(std::string(MODULES_DIR)+std::string(MOD_VPT_SENSOR)+".ini");
