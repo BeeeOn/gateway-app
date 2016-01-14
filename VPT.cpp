@@ -105,7 +105,7 @@ void VPTSensor::detectDevices(void) {
 			log.information("VPT: Detected device " + device.name + " with ip " + device.ip);
 			map_devices.insert({id, device});
 		}
-		catch ( ... ) { }
+		catch ( ... ) {/* exceptions are cought in the caller */}
 	}
 	log.information("VPT: Stop device discovery");
 }
