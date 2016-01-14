@@ -14,11 +14,13 @@ using Poco::Logger;
 using Poco::Runnable;
 using Poco::Util::IniFileConfiguration;
 
+#define VPT_DEFAULT_WAKEUP_TIME 15 /* seconds */
+
 VPTSensor::VPTSensor(IOTMessage _msg, shared_ptr<Aggregator> _agg) :
 	agg(_agg),
 	log(Poco::Logger::get("Adaapp-VPT")),
 	msg(_msg),
-	wake_up_time(15)
+	wake_up_time(VPT_DEFAULT_WAKEUP_TIME)
 {
 	AutoPtr<IniFileConfiguration> cfg;
 	try {
@@ -116,8 +118,8 @@ bool VPTSensor::isVPTSensor(long long int sensor_id) {
 void VPTSensor::parseCmdFromServer(Command cmd){
 	if (cmd.state == "update") {
 		if (sensor.euid == cmd.euid) {
-			if ( cmd.time < 15 ) {
-				wake_up_time = 15;
+			if ( cmd.time < VPT_DEFAULT_WAKEUP_TIME ) {
+				wake_up_time = VPT_DEFAULT_WAKEUP_TIME;
 			}
 			else {
 				wake_up_time = cmd.time;
