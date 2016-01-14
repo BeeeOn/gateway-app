@@ -67,6 +67,7 @@ private:
 	void pairDevices();
 	uint32_t parseDeviceId(std::string &content);
 	void updateDeviceWakeUp(long long int euid, unsigned int time);
+	void processCmdSet(Command cmd);
 };
 
 #endif

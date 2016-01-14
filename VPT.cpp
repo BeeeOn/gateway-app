@@ -136,19 +136,24 @@ void VPTSensor::updateDeviceWakeUp(long long int euid, unsigned int time)
 	}
 }
 
+void VPTSensor::processCmdSet(Command cmd)
+{
+	std::map<uint32_t, str_device>::iterator it_ptr;
+	if ( (it_ptr = map_devices.find(cmd.euid)) != map_devices.end() ) {
+		pair<int, float> value = cmd.values.at(0);
+		string request_url = json->generateRequestURL(it_ptr->second.name, value.first, value.second);
+		log.information("VPT: " + it_ptr->second.ip + ": Set actuator with ID:" + to_string(value.first) + " on " + to_string((int)value.second));
+		http_client->sendRequest(it_ptr->second.ip, request_url);
+	}
+}
+
 void VPTSensor::parseCmdFromServer(Command cmd){
 	if (cmd.state == "update") {
 		updateDeviceWakeUp(cmd.euid, cmd.time);
 		return;
 	}
 	else if (cmd.state == "set") {
-		std::map<uint32_t, str_device>::iterator it_ptr;
-		if ( (it_ptr = map_devices.find(cmd.euid)) != map_devices.end() ) {
-			pair<int, float> value = cmd.values.at(0);
-			string request_url = json->generateRequestURL(it_ptr->second.name, value.first, value.second);
-			log.information("VPT: " + it_ptr->second.ip + ": Set actuator with ID:" + to_string(value.first) + " on " + to_string((int)value.second));
-			http_client->sendRequest(it_ptr->second.ip, request_url);
-		}
+		processCmdSet(cmd);
 		return;
 	}
 	else if (cmd.state == "listen") {
