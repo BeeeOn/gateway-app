@@ -49,6 +49,26 @@ VPTSensor::VPTSensor(IOTMessage _msg, shared_ptr<Aggregator> _agg) :
 	http_client.reset(new HTTPClient);
 }
 
+void VPTSensor::fetchAndSendMessage(map<uint32_t, str_device>::iterator &device)
+{
+	try {
+		pair<bool, Command> response;
+		if (createMsg(device)) {
+			log.information("VPT: Sending values to server");
+			response = agg->sendData(msg);
+			if (response.first) {
+				parseCmdFromServer(response.second);
+			}
+		}
+		else {
+			log.error("Can't load new value of VPT sensor, send terminated");
+		}
+	}
+	catch (Poco::Exception & exc) {
+		log.error(exc.displayText());
+	}
+}
+
 /**
  * Main method of this thread.
  * Periodically send "data" messages with current pressure sensor value.
@@ -60,24 +80,8 @@ void VPTSensor::run(){
 	detectDevices();
 	pairDevices();
 	while( !quit_global_flag ) {
-		for (auto device = map_devices.begin(); device != map_devices.end(); device++ ) {
-			try {
-				pair<bool, Command> response;
-				if (createMsg(device)) {
-					log.information("VPT: Sending values to server");
-					response = agg->sendData(msg);
-					if (response.first) {
-						parseCmdFromServer(response.second);
-					}
-				}
-				else {
-					log.error("Can't load new value of VPT sensor, send terminated");
-				}
-			}
-			catch (Poco::Exception & exc) {
-				log.error(exc.displayText());
-			}
-		}
+		for (auto device = map_devices.begin(); device != map_devices.end(); device++ )
+			fetchAndSendMessage(device);
 
 		for (unsigned int i=0; i<wake_up_time; i++) {
 			if (quit_global_flag)

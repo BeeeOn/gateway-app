@@ -63,6 +63,7 @@ private:
 	unsigned int wake_up_time;
 
 	bool createMsg(std::map<uint32_t, str_device>::iterator & device);
+	void fetchAndSendMessage(std::map<uint32_t, str_device>::iterator &device);
 	void pairDevices();
 	uint32_t parseDeviceId(std::string &content);
 };
