@@ -16,6 +16,11 @@ using Poco::Util::IniFileConfiguration;
 
 #define VPT_DEFAULT_WAKEUP_TIME 15 /* seconds */
 
+static const string vpt_ini_file(void)
+{
+	return std::string(MODULES_DIR) + std::string(MOD_VPT_SENSOR) + ".ini";
+}
+
 VPTSensor::VPTSensor(IOTMessage _msg, shared_ptr<Aggregator> _agg) :
 	agg(_agg),
 	log(Poco::Logger::get("Adaapp-VPT")),
@@ -24,7 +29,7 @@ VPTSensor::VPTSensor(IOTMessage _msg, shared_ptr<Aggregator> _agg) :
 {
 	AutoPtr<IniFileConfiguration> cfg;
 	try {
-		cfg = new IniFileConfiguration(std::string(MODULES_DIR)+std::string(MOD_VPT_SENSOR)+".ini");
+		cfg = new IniFileConfiguration(vpt_ini_file());
 	}
 	catch (Poco::Exception& ex) {
 		log.error("Exception with config file reading:\n" + ex.displayText());
