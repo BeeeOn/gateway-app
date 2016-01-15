@@ -57,15 +57,15 @@ private:
 	std::unique_ptr<JSONDevices> json;
 	Poco::Logger& log;
 	IOTMessage msg;
-	std::map<uint32_t, str_device> map_devices;
+	std::map<long long int, str_device> map_devices;
 	Device sensor;
 	TT_Table tt;
 	unsigned int wake_up_time;
 
-	bool createMsg(std::map<uint32_t, str_device>::iterator & device);
-	void fetchAndSendMessage(std::map<uint32_t, str_device>::iterator &device);
+	bool createMsg(std::map<long long int, str_device>::iterator & device);
+	void fetchAndSendMessage(std::map<long long int, str_device>::iterator &device);
 	void pairDevices();
-	uint32_t parseDeviceId(std::string &content);
+	long long int parseDeviceId(std::string &content);
 	void updateDeviceWakeUp(long long int euid, unsigned int time);
 	void processCmdSet(Command cmd);
 	void processCmdListen(void);

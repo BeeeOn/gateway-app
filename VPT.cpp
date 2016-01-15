@@ -49,7 +49,7 @@ VPTSensor::VPTSensor(IOTMessage _msg, shared_ptr<Aggregator> _agg) :
 	http_client.reset(new HTTPClient);
 }
 
-void VPTSensor::fetchAndSendMessage(map<uint32_t, str_device>::iterator &device)
+void VPTSensor::fetchAndSendMessage(map<long long int, str_device>::iterator &device)
 {
 	try {
 		pair<bool, Command> response;
@@ -94,16 +94,16 @@ void VPTSensor::run(){
 #define VPT_ID_PREFIX 0xa4000000
 #define VPT_ID_MASK   0x00ffffff
 
-uint32_t VPTSensor::parseDeviceId(string &content)
+long long int VPTSensor::parseDeviceId(string &content)
 {
 	string id = json->getParameterValuesFromContent("id", content);
-	uint32_t id32 = std::stoul(id.substr(5,11), nullptr, 16);
+	long long int id32 = std::stoul(id.substr(5,11), nullptr, 16);
 	return VPT_ID_PREFIX | (id32 & VPT_ID_MASK);
 }
 
 void VPTSensor::detectDevices(void) {
 	log.information("VPT: Start device discovery");
-	uint32_t id;
+	long long int id;
 	vector<string> devices = http_client->discoverDevices();
 	str_device device;
 	for ( vector<string>::iterator it = devices.begin(); it != devices.end(); it++ ) {
@@ -138,7 +138,7 @@ void VPTSensor::updateDeviceWakeUp(long long int euid, unsigned int time)
 
 void VPTSensor::processCmdSet(Command cmd)
 {
-	std::map<uint32_t, str_device>::iterator it_ptr;
+	std::map<long long int, str_device>::iterator it_ptr;
 	if ( (it_ptr = map_devices.find(cmd.euid)) != map_devices.end() ) {
 		pair<int, float> value = cmd.values.at(0);
 		string request_url = json->generateRequestURL(it_ptr->second.name, value.first, value.second);
@@ -174,7 +174,7 @@ void VPTSensor::parseCmdFromServer(Command cmd){
 	log.error("Unexpected answer from server, received command: " + cmd.state);
 }
 
-bool VPTSensor::createMsg(map<uint32_t, str_device>::iterator & device) {
+bool VPTSensor::createMsg(map<long long int, str_device>::iterator & device) {
 	string website = http_client->sendRequest(device->second.ip);
 	sensor.euid = device->first;
 	try {
