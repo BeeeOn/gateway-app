@@ -38,9 +38,6 @@ VPTSensor::VPTSensor(IOTMessage _msg, shared_ptr<Aggregator> _agg) :
 	setLoggingLevel(log, cfg); /* Set logging level from configuration file*/
 	setLoggingChannel(log, cfg); /* Set where to log (console, file, etc.)*/
 
-	sensor.version = 1;
-	sensor.pairs = 1;
-
 	msg.state = "data";
 	msg.priority = MSG_PRIO_SENSOR;
 	msg.offset = 0;
@@ -112,6 +109,11 @@ void VPTSensor::detectDevices(void) {
 			id = parseDeviceId(content);
 			device.name = json->getParameterValuesFromContent("device", content);
 			device.ip = *it;
+			device.sensor.version = 1;
+			device.sensor.euid = id;
+			device.sensor.device_id = json->getID(device.name);
+			device.sensor.pairs = 0;
+			device.sensor.values.clear();
 			log.information("VPT: Detected device " + device.name + " with ip " + device.ip);
 			map_devices.insert({id, device});
 		}
@@ -176,17 +178,17 @@ void VPTSensor::parseCmdFromServer(Command cmd){
 
 bool VPTSensor::createMsg(long long int euid, str_device &device) {
 	string website = http_client->sendRequest(device.ip);
-	sensor.euid = euid;
+	device.sensor.euid = euid;
 	try {
-		sensor.values = json->getSensors(website);
+		device.sensor.values = json->getSensors(website);
 	}
 	catch ( Poco::Exception & exc ) {
 		log.error("VPT: " + exc.displayText());
 		return false;
 	}
-	sensor.pairs = sensor.values.size();
-	sensor.device_id = json->getID(device.name);
-	msg.device = sensor;
+	device.sensor.pairs = device.sensor.values.size();
+	device.sensor.device_id = json->getID(device.name);
+	msg.device = device.sensor;
 	msg.time = time(NULL);
 	return true;
 }

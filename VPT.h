@@ -37,7 +37,8 @@ extern bool quit_global_flag;
 struct str_device {
 	std::string name;
 	std::string ip;
-};
+	Device sensor;
+} str_device;
 
 class Aggregator;
 
@@ -58,7 +59,6 @@ private:
 	Poco::Logger& log;
 	IOTMessage msg;
 	std::map<long long int, str_device> map_devices;
-	Device sensor;
 	TT_Table tt;
 	unsigned int wake_up_time;
 
