@@ -38,6 +38,7 @@ struct str_device {
 	std::string name;
 	std::string ip;
 	Device sensor;
+	unsigned int wake_up_time;
 } str_device;
 
 class Aggregator;
