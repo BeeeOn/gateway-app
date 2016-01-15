@@ -50,7 +50,7 @@ void VPTSensor::fetchAndSendMessage(map<long long int, str_device>::iterator &de
 {
 	try {
 		pair<bool, Command> response;
-		if (createMsg(device->first, device->second)) {
+		if (createMsg(device->second)) {
 			log.information("VPT: Sending values to server");
 			response = agg->sendData(msg);
 			if (response.first) {
@@ -176,9 +176,9 @@ void VPTSensor::parseCmdFromServer(Command cmd){
 	log.error("Unexpected answer from server, received command: " + cmd.state);
 }
 
-bool VPTSensor::createMsg(long long int euid, str_device &device) {
+bool VPTSensor::createMsg(str_device &device) {
 	string website = http_client->sendRequest(device.ip);
-	device.sensor.euid = euid;
+
 	try {
 		device.sensor.values = json->getSensors(website);
 	}
