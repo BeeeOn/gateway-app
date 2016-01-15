@@ -18,7 +18,7 @@ using Poco::Util::IniFileConfiguration;
 
 static const string vpt_ini_file(void)
 {
-	return std::string(MODULES_DIR) + std::string(MOD_VPT_SENSOR) + ".ini";
+	return string(MODULES_DIR) + string(MOD_VPT_SENSOR) + ".ini";
 }
 
 VPTSensor::VPTSensor(IOTMessage _msg, shared_ptr<Aggregator> _agg) :
@@ -94,7 +94,7 @@ void VPTSensor::run(){
 long long int VPTSensor::parseDeviceId(string &content)
 {
 	string id = json->getParameterValuesFromContent("id", content);
-	long long int id32 = std::stoul(id.substr(5,11), nullptr, 16);
+	long long int id32 = stoul(id.substr(5,11), nullptr, 16);
 	return VPT_ID_PREFIX | (id32 & VPT_ID_MASK);
 }
 
@@ -140,7 +140,7 @@ void VPTSensor::updateDeviceWakeUp(long long int euid, unsigned int time)
 
 void VPTSensor::processCmdSet(Command cmd)
 {
-	std::map<long long int, VPTDevice>::iterator it_ptr;
+	map<long long int, VPTDevice>::iterator it_ptr;
 	if ( (it_ptr = map_devices.find(cmd.euid)) != map_devices.end() ) {
 		pair<int, float> value = cmd.values.at(0);
 		string request_url = json->generateRequestURL(it_ptr->second.name, value.first, value.second);
