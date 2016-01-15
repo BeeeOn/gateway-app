@@ -125,20 +125,20 @@
 /**
  * Data type for button event (according to the length of press)
  */
-typedef enum {
+enum BUTTON_EVENT {
 	BUTTON_EVENT_SHORT = 0,
 	BUTTON_EVENT_LONG = 1,
-} BUTTON_EVENT;
+};
 
 /**
  * Data type for message priority. It is used in cache when there is a network outage.
  */
-typedef enum {
+enum MSG_PRIO {
 	MSG_PRIO_HISTORY = 0,   // Messages from cache memory (low-priority)
 	MSG_PRIO_SENSOR  = 1,   // On-line messages which come from sensor (normal-priority)
 	MSG_PRIO_ACTUATOR= 2,   // Sensor-actuator messages (high-priority)
 	MSG_PRIO_REG     = 6    // Regisration message (highest priority)
-} MSG_PRIO;
+};
 
 inline long long int toNumFromString(std::string num) {
 	try {
@@ -189,7 +189,7 @@ inline std::string toStringFromHex (int num, int width = 2, bool upper_case = fa
 	return (static_cast<std::ostringstream*>( &(std::ostringstream() << "0x" << std::internal << std::setfill('0') << std::setw(width) << std::hex << (upper_case ? std::uppercase : std::nouppercase) << num) )->str());
 }
 
-typedef struct {
+struct EEPROM_ITEMS {
 	bool valid;                                                               // if eeprom contains 0xad byte as first byte
 	unsigned int version;                                                     // version of EEPROM data structure
 	std::vector<std::pair<unsigned int, long long int> > items;            // array for items in EEPROM - type (1B), data($length B))
@@ -201,7 +201,7 @@ typedef struct {
 			std::cout << "  Type: " << toStringFromHex(item.first) << ", value: " << toStringFromHex(item.second) << std::endl;
 		}
 	}
-} EEPROM_ITEMS;
+};
 
 inline bool getDebugFlag (void) {
 	Poco::AutoPtr<Poco::Util::IniFileConfiguration> cfg;
@@ -434,7 +434,7 @@ inline Poco::Logger& getErrLogger () {
 	return logger;
 }
 
-typedef struct Device {
+struct Device {
 	int version;		// Version of PAN<->adapter protocol
 	long long int euid;
 	long int device_id;	// ID to device table
@@ -456,9 +456,9 @@ typedef struct Device {
 			std::cout << "  id:" << toStringFromInt(i.first) << ", value:" << toStringFromFloat(i.second) << std::endl;
 		}
 	}
-} Device;
+};
 
-typedef struct IOTMessage {
+struct IOTMessage {
 	std::string protocol_version;// XML protocol version (adapter<=>server)
 	std::string state;           // Type of message, how to handle it
 	std::string adapter_id;      // ID of adapter
@@ -495,9 +495,9 @@ typedef struct IOTMessage {
 		std::cout << "tt_ver :" << tt_version << std::endl;
 		device.print();
 	}
-} IOTMessage;
+};
 
-typedef struct Command {
+struct Command {
 	std::string protocol_version;	// XML protocol version (adapter<=>server)
 	std::string state;		// Type of message, how to handle it
 	long long int euid;             // EUID of sensor for which that command belongs to
@@ -524,12 +524,12 @@ typedef struct Command {
 			std::cout << "  module_id:" << toStringFromHex(i.first) << ", value:" << toStringFromFloat(i.second) << std::endl;
 		}
 	}
-} Command;
+};
 
 /**
  * Module of the device
  */
-typedef struct TT_Module {
+struct TT_Module {
 	int module_id;		// sensor/actuator id
 	int module_type;	// type of senzor value
 	int size;		// size of the value (in bytes)
@@ -575,12 +575,12 @@ typedef struct TT_Module {
 		value_max({false, 0})
 	{ };
 
-} TT_Module;
+};
 
 /**
  * Structure for devices.
  */
-typedef struct TT_Device {
+struct TT_Device {
 	int  device_id;
 	std::map<int, TT_Module> modules; // <module_id, module>
 
@@ -593,6 +593,6 @@ typedef struct TT_Device {
 		device_id(0)
 	{	}
 
-} TT_Device;
+};
 
 #endif	/* UTILS_H */

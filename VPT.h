@@ -34,10 +34,10 @@
 
 extern bool quit_global_flag;
 
-typedef struct str_device {
+struct str_device {
 	std::string name;
 	std::string ip;
-} str_device;
+};
 
 class Aggregator;
 

@@ -30,27 +30,27 @@
 /**
  * A structure represent options, for one value which is saved into converter
  */
-typedef struct converter_option {
+struct converter_option {
 	std::vector<std::string> options_name;
 	std::vector<int> options_id;
-} converter_option;
+};
 
 /**
  * A structure represent incomplete description for one actuator (for full description is missing id)
  */
-typedef struct actuator_values {
+struct actuator_values {
 	//@{
 	std::string variable; /**< Variable name for HTTP GET request */
 	std::shared_ptr<std::string> url; /**< URL path for HTTP requests */
 	std::string name; /**< Actuator name is additional variable, which is used only for converter */
 	std::shared_ptr<std::string> action; /**< Indicates special function, which is needed execute before sending value */
 	//@}
-} actuator_values;
+};
 
 /**
  * A structure represent device specification
  */
-typedef struct json_device {
+struct json_device {
 	//@{
 	int id;
 	std::map<std::string,std::vector<std::tuple<std::string, int, std::string>>> sensors; /**<Group name contains sensors, which have parameters:
@@ -59,7 +59,7 @@ typedef struct json_device {
 	std::map<std::string, std::shared_ptr<converter_option>> converter; /**< Converter contains pair: supported name for sensor/actuator
 																				and convert options */
 	//@}
-} json_device;
+};
 
 
 /**
