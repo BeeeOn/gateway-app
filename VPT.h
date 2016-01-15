@@ -62,7 +62,7 @@ private:
 	TT_Table tt;
 	unsigned int wake_up_time;
 
-	bool createMsg(std::map<long long int, str_device>::iterator & device);
+	bool createMsg(long long int euid, str_device &device);
 	void fetchAndSendMessage(std::map<long long int, str_device>::iterator &device);
 	void pairDevices();
 	long long int parseDeviceId(std::string &content);
