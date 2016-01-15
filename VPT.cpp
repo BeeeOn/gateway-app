@@ -122,8 +122,8 @@ void VPTSensor::detectDevices(void) {
 	log.information("VPT: Stop device discovery");
 }
 
-bool VPTSensor::isVPTSensor(long long int sensor_id) {
-	return map_devices.find(sensor_id) != map_devices.end();
+bool VPTSensor::isVPTSensor(long long int euid) {
+	return map_devices.find(euid) != map_devices.end();
 }
 
 void VPTSensor::updateDeviceWakeUp(long long int euid, unsigned int time)
