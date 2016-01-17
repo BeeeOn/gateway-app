@@ -5,6 +5,3 @@ nbproject/*
 # CMake build
 /build_*/
 /install_*/
-
-# Ignore logs from testing directory
-testing/logs
