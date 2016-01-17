@@ -1,0 +1,17 @@
+[Unit]
+Description=BeeeOn Main Adapter Application
+After=mosquitto.service
+Wants=mosquitto.service
+
+[Service]
+TimeoutStartSec=30
+TimeoutStopSec=20
+Nice=-5
+WorkingDirectory=/usr/bin/
+# XXX That sleep should be fixed with mosquitto startup signalling
+ExecStart=/bin/sh -c "sleep 3; /usr/bin/adaapp"
+RestartSec=5
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,3 @@
+#!/bin/sh
+
+"${EDITOR:-/usr/bin/nano}" /etc/beeeon/AdaApp.ini

@@ -1,0 +1,11 @@
+#!/bin/sh
+FILE="/etc/beeeon/virtual_sensor.ini"
+echo -e "\e[1mCurrent configuration for module of Virtual sensors\e[0m"
+echo -e "(location: \e[96m$(realpath $FILE)\e[0m)"
+echo "(commented lines are suppressed)"
+echo
+if [ -e $FILE ] ;then
+  cat $FILE | grep -v '^;'
+else
+  echo "File doesn't exist."
+fi

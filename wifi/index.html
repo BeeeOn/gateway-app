@@ -1,0 +1,45 @@
+<html>
+<head>
+	<link rel="shortcut icon" type="image/ico" href="img/favicon.ico">
+	<link rel="stylesheet" type="text/css" href="img/style.css" />
+	<title>BeeeOn Gateway</title>
+</head>
+<body class="mainpage">
+	<center>
+	
+	<img src="img/logo.png" alt="BeeeOn" style="width:200px;height:174px;">
+	<!-- <h1>BeeeOn</h1> -->
+	<h3>Login adapter to your LAN</h3>
+
+	<form action="accept.html" method="post">
+		SSID:&nbsp;&nbsp;<input id="ssid" type="text" name="first" maxlength="32" placeholder="Name your Wifi" autofocus required><br>
+		PASS:&nbsp;<input type="password" name="second" maxlength="64" placeholder="Password"><br>
+	<input type="submit" value="  OK  ">
+	</form>
+	
+	<strong>Available networks </strong>
+	<button onclick="reloadIFrame();">Refresh</button><br>
+	<iframe src="wlans.html" id="lans" style="background: #FFFFFF;" frameBorder="0" width="215" height="200"></iframe>
+	
+	<script>
+		window.onload = function() {
+			var iframeWin = document.getElementById("lans").contentWindow;
+		}
+	</script>
+	
+	<script> <!-- Refresh frame every 10s -->
+		window.setInterval("reloadIFrame();", 10000);
+		function reloadIFrame() {
+			document.getElementById("lans").src="wlans.html";
+		}
+	</script>
+	
+	<script>
+		function fill(val){
+			document.getElementById("ssid").value=val;
+		}
+	</script>
+	
+</center>
+</body>
+</html>

@@ -1,0 +1,21 @@
+p {
+	font-weight: bold;
+	color: #0097A7;
+	line-height: 40%;
+	padding: 10 0 0 7px;
+	font-size: 18px;
+}
+p:hover {
+	color: #FF6858;
+}
+a {
+	color: white;
+	font-size: 18px;
+}
+div.accept {
+	font-size: 18px;
+}
+body.mainpage {
+	background-color: #0097A7;
+	color: white;
+}
