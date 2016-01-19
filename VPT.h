@@ -39,6 +39,7 @@ typedef struct VPTDevice {
 	std::string ip;
 	Device sensor;
 	unsigned int wake_up_time;
+	unsigned int time_left;
 } VPTDevice;
 
 class Aggregator;
@@ -61,9 +62,9 @@ private:
 	IOTMessage msg;
 	std::map<long long int, VPTDevice> map_devices;
 	TT_Table tt;
-	unsigned int wake_up_time;
 
 	bool createMsg(VPTDevice &device);
+	unsigned int nextWakeup(void);
 	void fetchAndSendMessage(std::map<long long int, VPTDevice>::iterator &device);
 	void pairDevices();
 	long long int parseDeviceId(std::string &content);

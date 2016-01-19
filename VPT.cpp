@@ -5,6 +5,8 @@
  * @brief Definition functions for VPTSensor
  */
 
+#include <cassert>
+
 #include "main.h"
 #include "VPT.h"
 
@@ -24,8 +26,7 @@ static const string vpt_ini_file(void)
 VPTSensor::VPTSensor(IOTMessage _msg, shared_ptr<Aggregator> _agg) :
 	agg(_agg),
 	log(Poco::Logger::get("Adaapp-VPT")),
-	msg(_msg),
-	wake_up_time(VPT_DEFAULT_WAKEUP_TIME)
+	msg(_msg)
 {
 	AutoPtr<IniFileConfiguration> cfg;
 	try {
@@ -66,6 +67,20 @@ void VPTSensor::fetchAndSendMessage(map<long long int, VPTDevice>::iterator &dev
 	}
 }
 
+unsigned int VPTSensor::nextWakeup(void)
+{
+	unsigned int min_time = ~0;
+
+	for (auto it = map_devices.begin(); it != map_devices.end(); it++) {
+		VPTDevice &device = it->second;
+
+		if (device.time_left < min_time)
+			min_time = device.time_left;
+	}
+
+	return min_time;
+}
+
 /**
  * Main method of this thread.
  * Periodically send "data" messages with current pressure sensor value.
@@ -74,13 +89,29 @@ void VPTSensor::fetchAndSendMessage(map<long long int, VPTDevice>::iterator &dev
  * so the Adaapp is terminating.
  */
 void VPTSensor::run(){
+	unsigned int next_wakeup = 0;
 	detectDevices();
 	pairDevices();
-	while( !quit_global_flag ) {
-		for (auto device = map_devices.begin(); device != map_devices.end(); device++ )
-			fetchAndSendMessage(device);
 
-		for (unsigned int i=0; i<wake_up_time; i++) {
+	for (auto device = map_devices.begin(); device != map_devices.end(); device++)
+		fetchAndSendMessage(device);
+
+	while( !quit_global_flag ) {
+		for (auto it = map_devices.begin(); it != map_devices.end(); it++) {
+			VPTDevice &device = it->second;
+
+			if (device.time_left == 0) {
+				fetchAndSendMessage(it);
+				device.time_left = device.wake_up_time;
+			}
+
+			assert(next_wakeup >= device.time_left);
+			device.time_left -= next_wakeup;
+		}
+
+		next_wakeup = nextWakeup();
+
+		for (unsigned int i = 0; i < next_wakeup; i++) {
 			if (quit_global_flag)
 				break;
 			sleep(1);
@@ -128,14 +159,22 @@ bool VPTSensor::isVPTSensor(long long int euid) {
 
 void VPTSensor::updateDeviceWakeUp(long long int euid, unsigned int time)
 {
-	if (sensor.euid == euid) {
-		if ( time < VPT_DEFAULT_WAKEUP_TIME ) {
-			wake_up_time = VPT_DEFAULT_WAKEUP_TIME;
-		}
-		else {
-			wake_up_time = time;
-		}
+	auto it = map_devices.find(euid);
+	if (it == map_devices.end()) {
+		log.warning("Setting wake up on unknown device " + to_string(euid));
+		return;
 	}
+
+	VPTDevice &dev = it->second;
+
+	if ( time < VPT_DEFAULT_WAKEUP_TIME ) {
+		dev.wake_up_time = VPT_DEFAULT_WAKEUP_TIME;
+	}
+	else {
+		dev.wake_up_time = time;
+	}
+
+	dev.time_left = dev.wake_up_time;
 }
 
 void VPTSensor::processCmdSet(Command cmd)
