@@ -161,7 +161,7 @@ void VPTSensor::updateDeviceWakeUp(long long int euid, unsigned int time)
 {
 	auto it = map_devices.find(euid);
 	if (it == map_devices.end()) {
-		log.warning("Setting wake up on unknown device " + to_string(euid));
+		log.warning("VPT: Setting wake up on unknown device " + to_string(euid));
 		return;
 	}
 
