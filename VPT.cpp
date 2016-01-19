@@ -182,8 +182,14 @@ void VPTSensor::processCmdSet(Command cmd)
 	map<long long int, VPTDevice>::iterator it_ptr;
 	if ( (it_ptr = map_devices.find(cmd.euid)) != map_devices.end() ) {
 		pair<int, float> value = cmd.values.at(0);
-		string request_url = json->generateRequestURL(it_ptr->second.name, value.first, value.second);
 		log.information("VPT: " + it_ptr->second.ip + ": Set actuator with ID:" + to_string(value.first) + " on " + to_string((int)value.second));
+
+		string request_url = json->generateRequestURL(it_ptr->second.name, value.first, value.second);
+		if (request_url.empty()) {
+			log.error("VPT: Setting actuator failed - device or actuator not found");
+			return;
+		}
+
 		http_client->sendRequest(it_ptr->second.ip, request_url);
 	}
 }
