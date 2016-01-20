@@ -29,7 +29,7 @@ HTTPClient::HTTPClient(void) : log(Poco::Logger::get("Adaapp-VPT")) {
 	receiveTime = Poco::Timespan(RECEIVE_TIMEOUT, 0);
 }
 
-vector<string> HTTPClient::discoverNetworks(void) {
+vector<string> HTTPClient::discoverDevices(void) {
 	return detectNetworkDevices(detectNetworkInterfaces());
 }
 
@@ -43,7 +43,6 @@ string HTTPClient::sendRequest(string ip, string url) {
 	request.setMethod(Poco::Net::HTTPRequest::HTTP_GET);
 	request.setURI(url);
 	log.information("HTTP: " + ip + ": " + url);
-	//Send requestuest for VPT values;
 	http.sendRequest(request);
 	istream & input = http.receiveResponse(response);
 	log.information("HTTP: Response status code: " + to_string(response.getStatus()));
@@ -76,39 +75,57 @@ vector<string> HTTPClient::detectNetworkDevices(vector<pair<uint32_t, IPAddress>
 	return devices;
 }
 
+static inline uint32_t ipv4_to_mask_u32(const NetworkInterface::AddressTuple &a)
+{
+	IPAddress address = a.get<IP_ADDR>();
+	IPAddress mask = a.get<MASK_ADDR>();
+	struct in_addr *addr = (struct in_addr *) (address & mask).addr();
+
+	return (uint32_t) addr->s_addr;
+}
+
+//Get Broadcast IP address, Prefix less than 24 will be rounding to 24
+static inline uint32_t ipv4_to_broadcast_u32(const NetworkInterface::AddressTuple &a)
+{
+	uint32_t addr = ipv4_to_mask_u32(a);
+	int prefix = a.get<MASK_ADDR>().prefixLength();
+	uint8_t *bytes = (uint8_t *) &addr;
+	int i;
+	int k;
+
+	for (i = 32, k = 1; prefix < i; i--, k <<= 1)
+		bytes[FOUR_BYTE] |= k;
+
+	return addr;
+}
+
+void HTTPClient::checkIPAddresses(NetworkInterface::AddressList &iplist,
+	vector<pair<uint32_t, IPAddress>> &networks)
+{
+	for(NetworkInterface::AddressList::const_iterator ip_itr=iplist.begin(); ip_itr != iplist.end(); ++ip_itr) {
+		//Element have to be IPv4 and contains IP Address, Mask Address, BroadCast Address
+		if ((ip_itr->get<IP_ADDR>()).family() == Poco::Net::IPAddress::Family::IPv4 &&  ip_itr->length == 3 ) {
+			uint32_t mask = ipv4_to_mask_u32(*ip_itr);
+			uint32_t broadcast = ipv4_to_broadcast_u32(*ip_itr);
+			networks.push_back({mask, IPAddress((struct in_addr *) &broadcast, sizeof(broadcast))});
+		}
+	}
+}
+
 vector<pair<uint32_t, IPAddress>> HTTPClient::detectNetworkInterfaces(void) {
-	//Network Variables
 	log.information("HTTP: Detect network interfaces");
 	Poco::Net::NetworkInterface::NetworkInterfaceList list = Poco::Net::NetworkInterface::list(); ///< List of interfaces
 	vector<pair<uint32_t, IPAddress>> networks;
-	uint32_t help_mask; // Help variables for save IP address as 32-bit value
-	uint8_t * ptr_ipv4bytes = (uint8_t *) &help_mask; //Pointer on bytes IP Address
 
-	//Get networks range for search VPT
 	if ( !list.empty() ) {
-		//Check all interface
 		for(NetworkInterface::NetworkInterfaceList::const_iterator itr=list.begin(); itr!=list.end(); ++itr)
 		{
-			//Interface type can't be type
-			if ( !itr->isLoopback() && !itr->isPointToPoint() ) {
-				//Get IP address list for Interface
-				NetworkInterface::AddressList iplist = itr->addressList();
-				//Check all IP address
-				for(NetworkInterface::AddressList::const_iterator ip_itr=iplist.begin(); ip_itr != iplist.end(); ++ip_itr) {
-					//Element have to be IPv4 and contains IP Address, Mask Address, BroadCast Address
-					log.information("HTTP: Check interface: " + itr->adapterName());
-					if ((ip_itr->get<IP_ADDR>()).family() == Poco::Net::IPAddress::Family::IPv4 &&  ip_itr->length == 3 ) {
-						//Get Network IP address
-						uint32_t mask = help_mask = (uint32_t)((struct in_addr * )
-							(ip_itr->get<IP_ADDR>() & ip_itr->get<MASK_ADDR>()).addr())->s_addr;
-						//Get Broadcast IP address, Prefix less than 24 will be rounding to 24
-						for ( uint8_t i = 32, prefix = (uint8_t) (ip_itr->get<MASK_ADDR>()).prefixLength(), k = 1; prefix < i; i--, k = k<<1 ) {
-							ptr_ipv4bytes[FOUR_BYTE] = ptr_ipv4bytes[FOUR_BYTE] | k;
-						}
-						networks.push_back({mask, IPAddress((struct in_addr *) &help_mask, sizeof(help_mask))});
-					}
-				}
-			}
+			if (itr->isLoopback() || itr->isPointToPoint())
+				continue;
+
+			NetworkInterface::AddressList iplist = itr->addressList();
+			log.information("HTTP: Check interface: " + itr->adapterName());
+			checkIPAddresses(iplist, networks);
 		}
 	}
 	else {

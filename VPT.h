@@ -34,10 +34,13 @@
 
 extern bool quit_global_flag;
 
-struct str_device {
+typedef struct VPTDevice {
 	std::string name;
 	std::string ip;
-};
+	Device sensor;
+	unsigned int wake_up_time;
+	unsigned int time_left;
+} VPTDevice;
 
 class Aggregator;
 
@@ -57,13 +60,17 @@ private:
 	std::unique_ptr<JSONDevices> json;
 	Poco::Logger& log;
 	IOTMessage msg;
-	std::map<uint32_t, str_device> map_devices;
-	Device sensor;
+	std::map<long long int, VPTDevice> map_devices;
 	TT_Table tt;
-	unsigned int wake_up_time;
 
-	bool createMsg(std::map<uint32_t, str_device>::iterator & device);
+	bool createMsg(VPTDevice &device);
+	unsigned int nextWakeup(void);
+	void fetchAndSendMessage(std::map<long long int, VPTDevice>::iterator &device);
 	void pairDevices();
+	long long int parseDeviceId(std::string &content);
+	void updateDeviceWakeUp(long long int euid, unsigned int time);
+	void processCmdSet(Command cmd);
+	void processCmdListen(void);
 };
 
 #endif
