@@ -105,7 +105,7 @@ void VPTSensor::run(){
 				device.time_left = device.wake_up_time;
 			}
 
-			assert(next_wakeup >= device.time_left);
+			assert(next_wakeup <= device.time_left);
 			device.time_left -= next_wakeup;
 		}
 
