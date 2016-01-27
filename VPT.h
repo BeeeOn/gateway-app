@@ -37,6 +37,7 @@ extern bool quit_global_flag;
 typedef struct VPTDevice {
 	std::string name;
 	std::string ip;
+	std::string password_hash;
 	Device sensor;
 	unsigned int wake_up_time;
 	unsigned int time_left;
@@ -61,9 +62,11 @@ private:
 	Poco::Logger& log;
 	IOTMessage msg;
 	std::map<long long int, VPTDevice> map_devices;
+	std::string password;
 	TT_Table tt;
 
 	bool createMsg(VPTDevice &device);
+	std::string buildPasswordHash(std::string content);
 	unsigned int nextWakeup(void);
 	void fetchAndSendMessage(std::map<long long int, VPTDevice>::iterator &device);
 	void pairDevices();

@@ -46,6 +46,20 @@ void JSONDevices::loadDeviceConfiguration(string device_name) {
 	log.information("JSON: Successfully loaded device specification for " + device_name);
 }
 
+bool JSONDevices::isJSONFormat(std::string content) {
+	parser.reset();
+	bool state;
+	try {
+		parser.parse(content);
+		state = true;
+	}
+	catch(...) {
+		state = false;
+	}
+	parser.reset();
+	return state;
+}
+
 std::string JSONDevices::generateRequestURL(string device_name, int id, float value) {
 	string request_url = "";
 	std::map<std::string,json_device>::iterator it = devices.find(device_name);

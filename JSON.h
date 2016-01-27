@@ -71,6 +71,8 @@ public:
 
 	void loadDeviceConfiguration(std::string);
 
+	bool isJSONFormat(std::string content);
+
 	std::string generateRequestURL(std::string device_name, int id, float value);
 
 	int getID(std::string device_name);

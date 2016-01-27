@@ -7,20 +7,53 @@
 
 #include <cassert>
 
+#include <Poco/DigestStream.h>
+#include <Poco/RegularExpression.h>
+#include <Poco/SHA1Engine.h>
+
 #include "main.h"
 #include "VPT.h"
 
 using namespace std;
 using Poco::AutoPtr;
+using Poco::DigestEngine;
+using Poco::DigestOutputStream;
 using Poco::Logger;
+using Poco::RegularExpression;
 using Poco::Runnable;
+using Poco::SHA1Engine;
 using Poco::Util::IniFileConfiguration;
 
+
 #define VPT_DEFAULT_WAKEUP_TIME 15 /* seconds */
+#define SEND_RETRY 3
+
+const string URL_PASSWORD_KEY = "&__HOSTPWD=";
 
 static const string vpt_ini_file(void)
 {
 	return string(MODULES_DIR) + string(MOD_VPT_SENSOR) + ".ini";
+}
+
+static string extractRandomNumber(const string & content) {
+	const static string prefix = "var randnum = ";
+	string ret = "";
+	RegularExpression regex(prefix + "([0-9]+)");
+	RegularExpression::Match position;
+	regex.match(content, 0, position);
+	if (position.length > 0)
+		ret = content.substr(position.offset+prefix.length(),position.length-prefix.length());
+
+	return ret;
+}
+
+static string generateSHAHash(const string & password, const string & rand_number) {
+	SHA1Engine sha1;
+	DigestOutputStream str(sha1);
+	str << rand_number + password;
+	str.flush();
+	const DigestEngine::Digest & digest = sha1.digest();
+	return DigestEngine::digestToHex(digest);
 }
 
 VPTSensor::VPTSensor(IOTMessage _msg, shared_ptr<Aggregator> _agg) :
@@ -38,7 +71,12 @@ VPTSensor::VPTSensor(IOTMessage _msg, shared_ptr<Aggregator> _agg) :
 	}
 	setLoggingLevel(log, cfg); /* Set logging level from configuration file*/
 	setLoggingChannel(log, cfg); /* Set where to log (console, file, etc.)*/
-
+	try {
+		password = cfg->getString(string(MOD_VPT_SENSOR)+".password", "");
+	}
+	catch (...) {
+		password = "";
+	}
 	msg.state = "data";
 	msg.priority = MSG_PRIO_SENSOR;
 	msg.offset = 0;
@@ -119,8 +157,23 @@ void VPTSensor::run(){
 	}
 }
 
-#define VPT_ID_PREFIX 0xa4000000
-#define VPT_ID_MASK   0x00ffffff
+string VPTSensor::buildPasswordHash(std::string content) {
+	string hash = "";
+	string random_number = extractRandomNumber(content);
+	log.information("VPT: Random number: " + random_number);
+	if (random_number.empty())
+		return hash;
+
+	try {
+		hash = generateSHAHash(password, random_number);
+	}
+	catch (...) {
+		log.error("VPT: HASH: Generate hash failed");
+	}
+
+	log.information("VPT: HASH: " + hash);
+	return hash;
+}
 
 long long int VPTSensor::parseDeviceId(string &content)
 {
@@ -181,18 +234,43 @@ void VPTSensor::updateDeviceWakeUp(long long int euid, unsigned int time)
 
 void VPTSensor::processCmdSet(Command cmd)
 {
-	map<long long int, VPTDevice>::iterator it_ptr;
-	if ( (it_ptr = map_devices.find(cmd.euid)) != map_devices.end() ) {
-		pair<int, float> value = cmd.values.at(0);
-		log.information("VPT: " + it_ptr->second.ip + ": Set actuator with ID:" + to_string(value.first) + " on " + to_string((int)value.second));
+	auto it = map_devices.find(cmd.euid);
+	if (it == map_devices.end()) {
+		log.error("VPT: Setting actuator on unknown device " + to_string(cmd.euid));
+		return;
+	}
 
-		string request_url = json->generateRequestURL(it_ptr->second.name, value.first, value.second);
-		if (request_url.empty()) {
-			log.error("VPT: Setting actuator failed - device or actuator not found");
-			return;
+	VPTDevice &dev = it->second;
+
+	pair<int, float> value = cmd.values.at(0);
+	log.information("VPT: " + dev.ip + ": Set actuator with ID:" + to_string(value.first) + " on " + to_string((int)value.second));
+
+	string url_value = json->generateRequestURL(dev.name, value.first, value.second);
+	if (url_value.empty()) {
+		log.error("VPT: Setting actuator failed - device or actuator not found");
+		return;
+	}
+
+	string request = url_value;
+
+	if (!dev.password_hash.empty())
+		request += URL_PASSWORD_KEY + dev.password_hash;
+
+	std::string content;
+	for(int i = 0; i < SEND_RETRY; i++) {
+		content = http_client->sendRequest(dev.ip, request);
+
+		if (!json->isJSONFormat(content)) {
+			log.information("VPT: Set Password");
+			dev.password_hash = buildPasswordHash(content);
+			if (dev.password_hash.empty())
+				continue;
+
+			request = url_value + URL_PASSWORD_KEY + dev.password_hash;
 		}
-
-		http_client->sendRequest(it_ptr->second.ip, request_url);
+		else {
+			break;
+		}
 	}
 }
 
