@@ -281,15 +281,17 @@ inline void setLoggingChannel(Poco::Logger& log,Poco::AutoPtr<Poco::Util::IniFil
 
 	try{
 		std::string log_path = cfg->getString("Logging.log_to_file");
-		std::string log_file_rotation = cfg->getString("Logging.log_to_file_rotation");
+		std::string log_file_rotation = cfg->getString("Logging.log_to_file_rotation", "512 K");
+		std::string log_purge_count = cfg->getString("Logging.log_to_file_purge_count", "1");
 		Poco::AutoPtr<Poco::FileChannel> pFile(new Poco::FileChannel(log_path));
 		pFile->setProperty("path",log_path);
 		pFile->setProperty("rotation",log_file_rotation);
+		pFile->setProperty("purgeCount", log_purge_count);
 		pSplitter->addChannel(pFile);
 
 	}
 	catch (Poco::Exception& ex) {
-
+		std::cerr << "Exception occured during logger setup: " << ex.displayText() << std::endl;
 	}
 	// TODO log to file
 	log.setChannel(pSplitter);
