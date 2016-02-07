@@ -1,5 +1,6 @@
 #!/usr/bin/python
-# Date: 2015-11-19
+# Author BeeeOn team
+# Date: 2016-02-06
 # Description: Script scans for available Bluetooth devices
 #		and from the desired sending their status to http daemon on OpenHAB.
 # Run:	bluetooth.py &
@@ -9,29 +10,28 @@ import time
 from time import gmtime, strftime
 import os,sys
 import subprocess
+from subprocess import Popen, PIPE
 import re
 
-devices_file = "BTdevices"		# path to file with list of MAC bluetooth devices
+devices_file = "bluedevices"	# path to file with list of MAC bluetooth devices
 openhab_path = "/opt/openhab"	# path to OpenHAB (where is ./start.sh)
 openhab_port = 8080				# port http
 mqtt_canal = "BeeeOn/openhab"	# name mosquitto chanel
-bt_list_file = "/tmp/.openhab.list"	# list available BT
 sleep_file = 2					# X seconds for check changes "devices_file"
-sleep_scan = 10					# X seconds for bluetooth scan
-log = False						# continuous listing to stdout
+sleep_scan = 9					# X seconds for bluetooth scan
+log = False						# continuous list-ing to stdout
 
 #=======================================================================
 thread_bool = True
 know = None
 #=======================================================================
-class Knowledge(object):
+class Knowledge(object):	# work with and memory MAC addresses
 	def __init__(self):
 		self.iii = 0
 		self.listMAC = []
 		self.name = []
 		self.item = []
 		self.change = False
-		self.all = []
 
 	def addMAC(self, mac):
 		if mac in self.listMAC:
@@ -91,45 +91,43 @@ class Knowledge(object):
 		self.change = False
 		return pom
 
-	def allDevices(self,stringe):
-		if stringe in self.all:
-			return
-		self.all.append(stringe)
-
-	def writeAllDevices(self):
-		with open(bt_list_file, 'w') as f:
-			for st in self.all:
-				f.write(st + '\n')
-			f.close()
-
 	def dbg(self):		# debug print
 		for i in range (0, self.iii):
 			print self.listMAC[i], self.name[i], self.item[i]
 
 #=======================================================================
-def failBT():	# vypis chyby a konec
-	print(str(sys.argv[0]) + ': Fail BT scan! Maybe BT donge is not connected.')
+def failBT():	# print error and The Bad End
+	print(str(sys.argv[0]) + ': BT scan failed! Maybe BT dongle is not connected.')
 	thread_bool = False
 	sys.exit(1)
 
 #=======================================================================
-def check_file():	# kontrola souboru s MAC
+def converse(mac):	# addition ":"
+	MAC = ''
+	for i in range(0, len(mac)):
+		MAC += mac[i]
+		if ((i+1)%2) == 0 and i < len(mac)-1:
+			MAC += ':'
+	return MAC
+
+#=======================================================================
+def check_file():	# control file with MAC
 	global openhab_path, know
 	timestamp = 0
 	templist = []
 
-	if not os.path.isfile(devices_file):
+	if not os.path.isfile(devices_file):	# if file does not exist, create
 		with open(devices_file, 'w') as fi:	# touch file
 			fi.write('# List of MAC address devices for OpenHAB\n# Example:\n# 00:FF:AB:CD:EF:GH\n# 00FFABCDEFGH\n')
 			fi.close()
 
-	while thread_bool:
-		if timestamp == os.stat(devices_file).st_mtime:
-			time.sleep(sleep_file)	# waits for file change
+	while thread_bool:	# over and over
+		if timestamp == os.stat(devices_file).st_mtime:	# file modification time
+			time.sleep(sleep_file)	# sleep
 			continue
 
 		f = open(devices_file, 'r')		# read list od MAC
-		templist = []
+		templist = []		# temporary list
 		for line in f:
 			line = line.strip()
 			if len(line) < 13:	# less than 12 isn't MAC (+ '\n')
@@ -139,7 +137,7 @@ def check_file():	# kontrola souboru s MAC
 			line = line.replace(':', '')
 			line = line.replace('\n', '')
 			if line.find('#') > -1:
-				line = line[0:line.find('#')]
+				line = line[0:line.find('#')]	# trimming
 			if len(line) > 0:
 				line = line.upper()
 				line = line.strip()
@@ -147,19 +145,18 @@ def check_file():	# kontrola souboru s MAC
 		f.close()
 		timestamp = os.stat(devices_file).st_mtime	# set time last change
 
-		know.checkChange(templist)	# check list change
+		know.checkChange(templist)	# monitoring changes in the list
 
-		if log: print "listMAC: ",templist #=#=#=#=#
+		if log: print "listMAC: ",templist
 
-		if not know.ischange():	continue	# only if there is a change
+		if not know.ischange():	continue	# to begin if lists are same
 
-		# write to config files
-		if openhab_path[-1] == '/': openhab_path = openhab_path[0:-1]
+		# write to config files OpenHab
+		if openhab_path[-1] == '/': openhab_path = openhab_path[0:-1]	# delete slash
 		f_items = open(openhab_path+"/configurations/items/adaapp.items", 'w')
 		f_rules = open(openhab_path+"/configurations/rules/adaapp.rules", 'w')
 		f_items.write('Group All\n')
 		for idx, mac in enumerate(know.listMAC):
-			#print idx, mac
 			f_items.write('\nSwitch BT'+ str(idx) +' (All) {bluetooth="'+ mac +'"}\n')
 			know.addItem(mac, ('BT'+ str(idx)) )
 			f_items.write('Switch MQTT'+ str(idx) +' (All) {mqtt=">[broker:'+mqtt_canal+':command:on:euid;'+ mac +';device_id;5;module_id;0x00;value;1.00],>[broker:'+mqtt_canal+':command:off:euid;'+ mac +';device_id;5;module_id;0x00;value;2.00]"}\n')
@@ -173,64 +170,45 @@ def check_file():	# kontrola souboru s MAC
 	#while
 
 #=======================================================================
-def scanBT():
+def scanBT():		# scanning of individual devices
 	global know
 	test = 0
 	while thread_bool:
 		time.sleep(sleep_scan)
-		try:
-			#output = subprocess.check_output(["hcitool", "scan"], stderr='/dev/null')
-			output = subprocess.check_output(["hcitool", "scan"])
-			test = 0
-		except:
-			if test > 0:
-				failBT()
-			else:
-				test = test + 1
-				continue
-		output = output.split('\n')
-
-		BTnet = []
-		for line in output:
-			if line.find(':') > 0:
-				line = " ".join(line.split())	# remove whitespaces
-				li = line.split()
-				if li[0] == '' or li[1] == '': continue
-				li[0] = li[0].upper()	# make upper case
-				li[0] = li[0].replace(':', '')	# remove ':'
-				BTnet.append(li[0])
-				know.addName(li[0],li[1])	# name
-				if log: print ("BT "+strftime("%H:%M:%S",gmtime())+": "), BTnet
-				know.allDevices(li[0] + ';' + li[1])
-		know.writeAllDevices()
-		#print BTnet
-		state = 'OFF'
 		for mac in know.listMAC:
-			if mac in BTnet:
-				state = 'ON'
-			else:
+			MAC = converse(mac)
+			(out, err) = Popen(["hcitool", "name", MAC], stdout=PIPE).communicate()
+			if len(out) <= 0:
+				if log: print (MAC+" NO name")
 				state = 'OFF'
-			#print 'sending'
-			os.system('curl --max-time 2 --connect-timeout 2 --header "Content-Type: text/plain" --request PUT --data "'+state+'" http://localhost:'+str(openhab_port)+'/rest/items/'+know.getItem(mac)+'/state 2>/dev/null')
-			#else: print(str(sys.argv[0]) + ": Failed sending to OpenHAB")
+			elif len(out) > 0:
+				if log: print (MAC+" HAS name: " + out)
+				state = 'ON'
+			try: os.system('curl --max-time 2 --connect-timeout 2 --header "Content-Type: text/plain" --request PUT --data "'+state+'" http://localhost:'+str(openhab_port)+'/rest/items/'+know.getItem(mac)+'/state')
+			except: print(str(sys.argv[0]) + ": Failed sending to OpenHAB")
+			time.sleep(1)
 	# while
 
 #=======================================================================
 def main():
-	global know
+	global log, know
 	out = 0
-	try: out = subprocess.call(["hciconfig", "hci0", "up"])	# enable of bluetooth dongle
-	except: failBT()
-	if out != 0: failBT()
+	try: out = subprocess.call(["hciconfig", "hci0", "up"])	# turn on bluetooth dongle
+	except: failBT()		# fail of turn on
+	if out != 0: failBT()	# bad return code
 
-	know = Knowledge()
+	know = Knowledge()	# object for parse and memory MAC address
 
 	try:
-		thread.start_new_thread( check_file, () )
+		thread.start_new_thread( check_file, () )	# check file with list of MAC
 		print(str(sys.argv[0]) + ": OK, run.")
 	except:
 		sys.stderr.write(str(sys.argv[0]) + ": Thread cannot start\n")
 		sys.exit(0)
+
+	if len(sys.argv) == 2:
+		if sys.argv[1] == '--log' or sys.argv[1] == '-l':
+			log = True
 
 	scanBT()
 
