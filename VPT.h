@@ -8,8 +8,6 @@
 #ifndef VPTSENSOR_H
 #define VPTSENSOR_H
 
-#include <cstdlib>
-#include <ctime>
 #include <iostream>
 #include <limits>
 #include <map>
@@ -18,6 +16,8 @@
 #include <utility>
 #include <vector>
 
+#include <cstdlib>
+#include <ctime>
 #include <unistd.h>
 
 #include <Poco/AutoPtr.h>

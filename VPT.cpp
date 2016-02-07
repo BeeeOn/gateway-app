@@ -26,6 +26,8 @@ using Poco::Util::IniFileConfiguration;
 
 
 #define VPT_DEFAULT_WAKEUP_TIME 15 /* seconds */
+#define VPT_ID_PREFIX 0xa4000000
+#define VPT_ID_MASK   0x00ffffff
 #define SEND_RETRY 3
 
 const string URL_PASSWORD_KEY = "&__HOSTPWD=";
@@ -40,6 +42,7 @@ static string extractRandomNumber(const string & content) {
 	string ret = "";
 	RegularExpression regex(prefix + "([0-9]+)");
 	RegularExpression::Match position;
+
 	regex.match(content, 0, position);
 	if (position.length > 0)
 		ret = content.substr(position.offset+prefix.length(),position.length-prefix.length());
@@ -50,8 +53,10 @@ static string extractRandomNumber(const string & content) {
 static string generateSHAHash(const string & password, const string & rand_number) {
 	SHA1Engine sha1;
 	DigestOutputStream str(sha1);
+
 	str << rand_number + password;
 	str.flush();
+
 	const DigestEngine::Digest & digest = sha1.digest();
 	return DigestEngine::digestToHex(digest);
 }
@@ -71,12 +76,14 @@ VPTSensor::VPTSensor(IOTMessage _msg, shared_ptr<Aggregator> _agg) :
 	}
 	setLoggingLevel(log, cfg); /* Set logging level from configuration file*/
 	setLoggingChannel(log, cfg); /* Set where to log (console, file, etc.)*/
+
 	try {
 		password = cfg->getString(string(MOD_VPT_SENSOR)+".password", "");
 	}
 	catch (...) {
 		password = "";
 	}
+
 	msg.state = "data";
 	msg.priority = MSG_PRIO_SENSOR;
 	msg.offset = 0;
@@ -134,7 +141,7 @@ void VPTSensor::run(){
 	for (auto device = map_devices.begin(); device != map_devices.end(); device++)
 		fetchAndSendMessage(device);
 
-	while( !quit_global_flag ) {
+	while(!quit_global_flag) {
 		for (auto it = map_devices.begin(); it != map_devices.end(); it++) {
 			VPTDevice &device = it->second;
 
@@ -187,7 +194,7 @@ void VPTSensor::detectDevices(void) {
 	long long int id;
 	vector<string> devices = http_client->discoverDevices();
 	VPTDevice device;
-	for ( vector<string>::iterator it = devices.begin(); it != devices.end(); it++ ) {
+	for (vector<string>::iterator it = devices.begin(); it != devices.end(); it++) {
 		try {
 			string content = http_client->sendRequest(*it);
 			id = parseDeviceId(content);
@@ -203,7 +210,7 @@ void VPTSensor::detectDevices(void) {
 			log.information("VPT: Detected device " + device.name + " with ip " + device.ip);
 			map_devices.insert({id, device});
 		}
-		catch ( ... ) {/* exceptions are cought in the caller */}
+		catch (...) {/* exceptions are cought in the caller */}
 	}
 	log.information("VPT: Stop device discovery");
 }
@@ -222,12 +229,10 @@ void VPTSensor::updateDeviceWakeUp(long long int euid, unsigned int time)
 
 	VPTDevice &dev = it->second;
 
-	if ( time < VPT_DEFAULT_WAKEUP_TIME ) {
+	if (time < VPT_DEFAULT_WAKEUP_TIME)
 		dev.wake_up_time = VPT_DEFAULT_WAKEUP_TIME;
-	}
-	else {
+	else
 		dev.wake_up_time = time;
-	}
 
 	dev.time_left = dev.wake_up_time;
 }
@@ -241,7 +246,6 @@ void VPTSensor::processCmdSet(Command cmd)
 	}
 
 	VPTDevice &dev = it->second;
-
 	pair<int, float> value = cmd.values.at(0);
 	log.information("VPT: " + dev.ip + ": Set actuator with ID:" + to_string(value.first) + " on " + to_string((int)value.second));
 
@@ -252,6 +256,10 @@ void VPTSensor::processCmdSet(Command cmd)
 	}
 
 	string request = url_value;
+	if (url_value.empty()) {
+		log.error("VPT: Setting actuator failed - device or actuator not found");
+		return;
+	}
 
 	if (!dev.password_hash.empty())
 		request += URL_PASSWORD_KEY + dev.password_hash;
@@ -280,7 +288,7 @@ void VPTSensor::processCmdListen(void)
 		detectDevices();
 		pairDevices();
 	}
-	catch ( Poco::Exception & exc ) {
+	catch (Poco::Exception & exc) {
 		log.error("VPT: " + exc.displayText());
 	}
 }
@@ -307,10 +315,11 @@ bool VPTSensor::createMsg(VPTDevice &device) {
 	try {
 		device.sensor.values = json->getSensors(website);
 	}
-	catch ( Poco::Exception & exc ) {
+	catch (Poco::Exception & exc) {
 		log.error("VPT: " + exc.displayText());
 		return false;
 	}
+
 	device.sensor.pairs = device.sensor.values.size();
 	device.sensor.device_id = json->getID(device.name);
 	msg.device = device.sensor;
@@ -319,7 +328,7 @@ bool VPTSensor::createMsg(VPTDevice &device) {
 }
 
 void VPTSensor::pairDevices(void) {
-	for( auto device = map_devices.begin(); device != map_devices.end(); device++ ) {
+	for(auto device = map_devices.begin(); device != map_devices.end(); device++) {
 		try {
 			json->loadDeviceConfiguration(device->second.name);
 		}

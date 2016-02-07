@@ -57,18 +57,18 @@ vector<string> HTTPClient::detectNetworkDevices(vector<pair<uint32_t, IPAddress>
 	uint32_t help_mask;
 	uint8_t * ptr_ipv4bytes = (uint8_t *) &help_mask;
 	Poco::Timespan connectTime(CONNECT_TIMEOUT);
-	for (vector<pair<uint32_t, IPAddress>>::iterator it = ip_ranges.begin(); it != ip_ranges.end(); it++ ) {
+	for (vector<pair<uint32_t, IPAddress>>::iterator it = ip_ranges.begin(); it != ip_ranges.end(); it++) {
 		help_mask = it->first;
 		broadcastIP = it->second;
 		IPAddress testIP((struct addr_in *) &help_mask, sizeof(help_mask));
 		//Generate IP for one range
-		for ( int p = 0; testIP <= broadcastIP && p < 256; p++, testIP = IPAddress((struct addr_in *) &help_mask, sizeof(help_mask)), ptr_ipv4bytes[FOUR_BYTE]++) {
+		for (int p = 0; testIP <= broadcastIP && p < 256; p++, testIP = IPAddress((struct addr_in *) &help_mask, sizeof(help_mask)), ptr_ipv4bytes[FOUR_BYTE]++) {
 			try {
 				//Try connect on IP
 				stream.connect(SocketAddress(testIP, Poco::UInt16(80)), connectTime);
 				devices.push_back(testIP.toString());
 			}
-			catch ( ...) { }
+			catch (...) { }
 			stream.close();
 		}
 	}
@@ -104,7 +104,7 @@ void HTTPClient::checkIPAddresses(NetworkInterface::AddressList &iplist,
 {
 	for(NetworkInterface::AddressList::const_iterator ip_itr=iplist.begin(); ip_itr != iplist.end(); ++ip_itr) {
 		//Element have to be IPv4 and contains IP Address, Mask Address, BroadCast Address
-		if ((ip_itr->get<IP_ADDR>()).family() == Poco::Net::IPAddress::Family::IPv4 &&  ip_itr->length == 3 ) {
+		if ((ip_itr->get<IP_ADDR>()).family() == Poco::Net::IPAddress::Family::IPv4 &&  ip_itr->length == 3) {
 			uint32_t mask = ipv4_to_mask_u32(*ip_itr);
 			uint32_t broadcast = ipv4_to_broadcast_u32(*ip_itr);
 			networks.push_back({mask, IPAddress((struct in_addr *) &broadcast, sizeof(broadcast))});
@@ -117,7 +117,7 @@ vector<pair<uint32_t, IPAddress>> HTTPClient::detectNetworkInterfaces(void) {
 	Poco::Net::NetworkInterface::NetworkInterfaceList list = Poco::Net::NetworkInterface::list(); ///< List of interfaces
 	vector<pair<uint32_t, IPAddress>> networks;
 
-	if ( !list.empty() ) {
+	if (!list.empty()) {
 		for(NetworkInterface::NetworkInterfaceList::const_iterator itr=list.begin(); itr!=list.end(); ++itr)
 		{
 			if (itr->isLoopback() || itr->isPointToPoint())
