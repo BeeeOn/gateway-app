@@ -71,16 +71,25 @@ VPTSensor::VPTSensor(IOTMessage _msg, shared_ptr<Aggregator> _agg) :
 		cfg = new IniFileConfiguration(vpt_ini_file());
 	}
 	catch (Poco::Exception& ex) {
-		log.error("Exception with config file reading:\n" + ex.displayText());
+		log.fatal("Exception with config file reading:\n" + ex.displayText());
 		exit (EXIT_FAILURE);
 	}
 	setLoggingLevel(log, cfg); /* Set logging level from configuration file*/
 	setLoggingChannel(log, cfg); /* Set where to log (console, file, etc.)*/
 
-	try {
-		password = cfg->getString(string(MOD_VPT_SENSOR)+".password", "");
-	}
-	catch (...) {
+	const string passwordKey(string(MOD_VPT_SENSOR)+".password");
+
+	if (cfg->hasProperty(passwordKey)) {
+		try {
+			password = cfg->getString(passwordKey, "");
+			log.notice("VPT: Using a shared password");
+		}
+		catch (...) {
+			log.warning("VPT: Failed to load password (no password is used)");
+			password = "";
+		}
+	} else {
+		log.notice("VPT: No password is used");
 		password = "";
 	}
 
@@ -97,7 +106,7 @@ void VPTSensor::fetchAndSendMessage(map<long long int, VPTDevice>::iterator &dev
 	try {
 		pair<bool, Command> response;
 		if (createMsg(device->second)) {
-			log.information("VPT: Sending values to server");
+			log.notice("VPT: Sending values to server");
 			response = agg->sendData(msg);
 			if (response.first) {
 				parseCmdFromServer(response.second);
@@ -167,7 +176,7 @@ void VPTSensor::run(){
 string VPTSensor::buildPasswordHash(std::string content) {
 	string hash = "";
 	string random_number = extractRandomNumber(content);
-	log.information("VPT: Random number: " + random_number);
+	log.debug("VPT: Random number: " + random_number);
 	if (random_number.empty())
 		return hash;
 
@@ -175,7 +184,7 @@ string VPTSensor::buildPasswordHash(std::string content) {
 		hash = generateSHAHash(password, random_number);
 	}
 	catch (...) {
-		log.error("VPT: HASH: Generate hash failed");
+		log.warning("VPT: HASH: Generate hash failed");
 	}
 
 	log.information("VPT: HASH: " + hash);
@@ -190,7 +199,7 @@ long long int VPTSensor::parseDeviceId(string &content)
 }
 
 void VPTSensor::detectDevices(void) {
-	log.information("VPT: Start device discovery");
+	log.notice("VPT: Start device discovery");
 	long long int id;
 	vector<string> devices = http_client->discoverDevices();
 	VPTDevice device;
@@ -212,7 +221,7 @@ void VPTSensor::detectDevices(void) {
 		}
 		catch (...) {/* exceptions are cought in the caller */}
 	}
-	log.information("VPT: Stop device discovery");
+	log.notice("VPT: Stop device discovery");
 }
 
 bool VPTSensor::isVPTSensor(long long int euid) {
@@ -269,7 +278,7 @@ void VPTSensor::processCmdSet(Command cmd)
 		content = http_client->sendRequest(dev.ip, request);
 
 		if (!json->isJSONFormat(content)) {
-			log.information("VPT: Set Password");
+			log.notice("VPT: Using password");
 			dev.password_hash = buildPasswordHash(content);
 			if (dev.password_hash.empty())
 				continue;

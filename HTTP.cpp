@@ -45,7 +45,14 @@ string HTTPClient::sendRequest(string ip, string url) {
 	log.information("HTTP: " + ip + ": " + url);
 	http.sendRequest(request);
 	istream & input = http.receiveResponse(response);
-	log.information("HTTP: Response status code: " + to_string(response.getStatus()));
+
+	const int status = response.getStatus();
+
+	if (status >= 400)
+		log.warning("HTTP: Response: " + to_string(status));
+	else
+		log.information("HTTP: Response: " + to_string(status));
+
 	return { std::istreambuf_iterator<char>(input), std::istreambuf_iterator<char>() };
 }
 
@@ -113,7 +120,7 @@ void HTTPClient::checkIPAddresses(NetworkInterface::AddressList &iplist,
 }
 
 vector<pair<uint32_t, IPAddress>> HTTPClient::detectNetworkInterfaces(void) {
-	log.information("HTTP: Detect network interfaces");
+	log.debug("HTTP: Detect network interfaces");
 	Poco::Net::NetworkInterface::NetworkInterfaceList list = Poco::Net::NetworkInterface::list(); ///< List of interfaces
 	vector<pair<uint32_t, IPAddress>> networks;
 
@@ -124,7 +131,7 @@ vector<pair<uint32_t, IPAddress>> HTTPClient::detectNetworkInterfaces(void) {
 				continue;
 
 			NetworkInterface::AddressList iplist = itr->addressList();
-			log.information("HTTP: Check interface: " + itr->adapterName());
+			log.debug("HTTP: Check interface: " + itr->adapterName());
 			checkIPAddresses(iplist, networks);
 		}
 	}
