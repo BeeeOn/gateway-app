@@ -151,7 +151,7 @@ Command XMLTool::parseXML(string str) {
 						}
 						// FIXME - id attribute is here only for backward compatibility, it should be removed in Q1/2016
 						else if (attribute->nodeName().compare("euid") == 0 || attribute->nodeName().compare("id") == 0) {
-							cmd.euid = atoll(attribute->nodeValue().c_str());
+							cmd.euid = stoull(attribute->nodeValue(), nullptr, 0);
 						}
 
 						else if (attribute->nodeName().compare("device_id") == 0) {

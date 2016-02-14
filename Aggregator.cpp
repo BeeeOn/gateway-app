@@ -426,13 +426,12 @@ void Aggregator::loadCache() {
 			continue;
 
 		StringTokenizer token(line, (std::string)";", StringTokenizer::TOK_TRIM | StringTokenizer::TOK_IGNORE_EMPTY);
-
 		for (unsigned int i = 0; i < (unsigned int)token.count();) {
 			if (token[i].compare("time") == 0)
 				msg.time = toIntFromString(token[i+1]);
 
 			else if (token[i].compare("euid") == 0)
-				msg.device.euid = toIntFromString(token[i+1]);
+				msg.device.euid = stoull(token[i+1], nullptr, 0);
 
 			else if (token[i].compare("device_id") == 0)
 				msg.device.device_id = toIntFromString(token[i+1]);

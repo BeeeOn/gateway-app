@@ -86,7 +86,7 @@ void PressureSensor::run(){
  * @param sensor_id
  * @return true if they are equal
  */
-bool PressureSensor::isPressureSensor(long long int sensor_id) {
+bool PressureSensor::isPressureSensor(euid_t sensor_id) {
 	return (sensor.euid == sensor_id);
 }
 

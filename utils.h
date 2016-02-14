@@ -19,6 +19,7 @@
 #include <tuple>
 #include <vector>
 
+#include <cstdint>
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -139,6 +140,8 @@ enum MSG_PRIO {
 	MSG_PRIO_ACTUATOR= 2,   // Sensor-actuator messages (high-priority)
 	MSG_PRIO_REG     = 6    // Regisration message (highest priority)
 };
+
+typedef uint64_t euid_t;
 
 inline long long int toNumFromString(std::string num) {
 	try {
@@ -438,7 +441,7 @@ inline Poco::Logger& getErrLogger () {
 
 struct Device {
 	int version;		// Version of PAN<->adapter protocol
-	long long int euid;
+	euid_t euid;
 	long int device_id;	// ID to device table
 	int pairs;		// Number of pairs
 	std::vector<std::pair<int, float> > values;
@@ -502,7 +505,7 @@ struct IOTMessage {
 struct Command {
 	std::string protocol_version;	// XML protocol version (adapter<=>server)
 	std::string state;		// Type of message, how to handle it
-	long long int euid;             // EUID of sensor for which that command belongs to
+	euid_t euid;             // EUID of sensor for which that command belongs to
 	long long int device_id;        // device_id typu zarizeni
 	long long int time;             // when should the sensor wake up
 	std::vector<std::pair<int, float> > values;

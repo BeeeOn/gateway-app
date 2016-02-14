@@ -52,7 +52,7 @@ public:
 	virtual void run();
 
 	void detectDevices();
-	bool isVPTSensor(long long int sensor_id);
+	bool isVPTSensor(euid_t sensor_id);
 	void parseCmdFromServer(Command cmd);
 
 private:
@@ -61,17 +61,17 @@ private:
 	std::unique_ptr<JSONDevices> json;
 	Poco::Logger& log;
 	IOTMessage msg;
-	std::map<long long int, VPTDevice> map_devices;
+	std::map<euid_t, VPTDevice> map_devices;
 	std::string password;
 	TT_Table tt;
 
 	bool createMsg(VPTDevice &device);
 	std::string buildPasswordHash(std::string content);
 	unsigned int nextWakeup(void);
-	void fetchAndSendMessage(std::map<long long int, VPTDevice>::iterator &device);
+	void fetchAndSendMessage(std::map<euid_t, VPTDevice>::iterator &device);
 	void pairDevices();
-	long long int parseDeviceId(std::string &content);
-	void updateDeviceWakeUp(long long int euid, unsigned int time);
+	euid_t parseDeviceId(std::string &content);
+	void updateDeviceWakeUp(euid_t euid, unsigned int time);
 	void processCmdSet(Command cmd);
 	void processCmdListen(void);
 };

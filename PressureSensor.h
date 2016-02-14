@@ -48,7 +48,7 @@ class PressureSensor : public Poco::Runnable {
 	public:
 		PressureSensor(IOTMessage _msg, std::shared_ptr<Aggregator> _agg);
 		virtual void run();
-		bool isPressureSensor(long long int sensor_id);
+		bool isPressureSensor(euid_t sensor_id);
 		void parseCmdFromServer(Command cmd);
 
 };

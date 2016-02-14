@@ -101,7 +101,7 @@ VPTSensor::VPTSensor(IOTMessage _msg, shared_ptr<Aggregator> _agg) :
 	http_client.reset(new HTTPClient);
 }
 
-void VPTSensor::fetchAndSendMessage(map<long long int, VPTDevice>::iterator &device)
+void VPTSensor::fetchAndSendMessage(map<euid_t, VPTDevice>::iterator &device)
 {
 	try {
 		pair<bool, Command> response;
@@ -194,16 +194,16 @@ string VPTSensor::buildPasswordHash(std::string content) {
 	return hash;
 }
 
-long long int VPTSensor::parseDeviceId(string &content)
+euid_t VPTSensor::parseDeviceId(string &content)
 {
 	string id = json->getParameterValuesFromContent("id", content);
-	long long int id32 = stoul(id.substr(5,11), nullptr, 16);
-	return VPT_ID_PREFIX | (id32 & VPT_ID_MASK);
+	euid_t euid = stoull(id.substr(5,11), nullptr, 0);
+	return VPT_ID_PREFIX | (euid & VPT_ID_MASK);
 }
 
 void VPTSensor::detectDevices(void) {
 	log.notice("VPT: Start device discovery");
-	long long int id;
+	euid_t id;
 	vector<string> devices = http_client->discoverDevices();
 	VPTDevice device;
 	for (vector<string>::iterator it = devices.begin(); it != devices.end(); it++) {
@@ -227,11 +227,11 @@ void VPTSensor::detectDevices(void) {
 	log.notice("VPT: Stop device discovery");
 }
 
-bool VPTSensor::isVPTSensor(long long int euid) {
+bool VPTSensor::isVPTSensor(euid_t euid) {
 	return map_devices.find(euid) != map_devices.end();
 }
 
-void VPTSensor::updateDeviceWakeUp(long long int euid, unsigned int time)
+void VPTSensor::updateDeviceWakeUp(euid_t euid, unsigned int time)
 {
 	auto it = map_devices.find(euid);
 	if (it == map_devices.end()) {
@@ -242,11 +242,12 @@ void VPTSensor::updateDeviceWakeUp(long long int euid, unsigned int time)
 	VPTDevice &dev = it->second;
 
 	if (time < VPT_DEFAULT_WAKEUP_TIME)
-		dev.wake_up_time = VPT_DEFAULT_WAKEUP_TIME;
-	else
-		dev.wake_up_time = time;
+		time = VPT_DEFAULT_WAKEUP_TIME;
 
+	dev.wake_up_time = time;
 	dev.time_left = dev.wake_up_time;
+
+	log.debug("VPT: Update resfresh time for device " + to_string(euid) + " on " + to_string(time) + " seconds");
 }
 
 void VPTSensor::processCmdSet(Command cmd)

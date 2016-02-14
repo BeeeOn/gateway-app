@@ -60,11 +60,11 @@ class PanInterface {
 public:
 	PanInterface(IOTMessage _msg, std::shared_ptr<Aggregator> _agg);
 	void sendCmd(std::vector<uint8_t>);
-	void deleteDevice(long long int);
+	void deleteDevice(euid_t);
 	void setPairingMode();
 	void setActuators(Command cmd);
 	void sendCommandToPAN(Command cmd);
-	
+
 	int convertBattery(float bat_actual);
 	void msgFromPAN(uint8_t msg_type, std::vector<uint8_t> data);
 

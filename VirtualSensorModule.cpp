@@ -114,7 +114,7 @@ void VirtualSensorModule::pairNewVS() {
 	}
 }
 
-bool VirtualSensorModule::isVirtualDevice(long long int sensor_id) {
+bool VirtualSensorModule::isVirtualDevice(euid_t sensor_id) {
 	for (VirtualSensor vs : sensors) {
 		if (vs.sensor.euid == sensor_id)
 			return true;

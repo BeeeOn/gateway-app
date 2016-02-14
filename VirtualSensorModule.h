@@ -31,7 +31,7 @@ class VirtualSensorModule : public Poco::Runnable {
 public:
 	VirtualSensorModule(IOTMessage _msg, std::shared_ptr<Aggregator> _agg);
 	void run();
-	bool isVirtualDevice(long long int sensor_id);
+	bool isVirtualDevice(euid_t sensor_id);
 	void fromServerCmd(Command _cmd);
 	virtual ~VirtualSensorModule();
 	bool unpairedSensorsLeft();

@@ -136,7 +136,7 @@ void PanInterface::setActuators(Command cmd) {
 	sendCmd(msg);
 }
 
-void PanInterface::deleteDevice(long long int id) {
+void PanInterface::deleteDevice(euid_t id) {
 	log.error("Delete device called with sensor_id = " + to_string(id) + "| This is not implemented yet!");
 }
 
