@@ -261,7 +261,6 @@ void VPTSensor::detectDevices(void) {
 			device.ip = *it;
 			device.sensor.version = 1;
 			device.sensor.euid = id;
-			device.sensor.device_id = json->getID(device.name);
 			device.sensor.pairs = 0;
 			device.sensor.values.clear();
 			device.wake_up_time = VPT_DEFAULT_WAKEUP_TIME;
