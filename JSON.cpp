@@ -113,9 +113,9 @@ vector<Value> JSONDevices::getSensors(std::string content, std::string device_na
 	if (device_name.empty())
 		device_name = jsonStruct["device"].toString() + "_" + jsonStruct["version"].toString();
 
-	if ((device_itr = devices.find(device_name)) == devices.end()) {
-		return values;
-	}
+	if ((device_itr = devices.find(device_name)) == devices.end())
+		Poco::Exception("JSON: Specification " + device_name + " not found");
+
 	device_info = &(device_itr->second);
 	string help_value;
 	for (auto & it : device_info->sensors) {
