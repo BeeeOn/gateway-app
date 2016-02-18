@@ -24,8 +24,12 @@ JSONDevices::JSONDevices(void) : log(Poco::Logger::get("Adaapp-VPT")) {
 	cfg = new Poco::Util::IniFileConfiguration(std::string(MODULES_DIR)+std::string(MOD_JSON)+".ini");
 }
 
-void JSONDevices::loadDeviceConfiguration(string device_name) {
-	string device_file = cfg->getString("devices."+device_name);
+void JSONDevices::loadDeviceConfiguration(string device_name, string page_version) {
+	if (page_version.empty())
+		page_version = "default";
+
+	string device_file = cfg->getString(device_name+"."+page_version);
+	device_name += "_" + page_version;
 	log.debug("JSON: Loading device specification for " + device_name);
 	Poco::DynamicStruct jsonStruct = loadFile(devices_folder+device_file);
 	checkBaseFormat(jsonStruct);
@@ -105,9 +109,10 @@ vector<Value> JSONDevices::getSensors(std::string content, std::string device_na
 	parser.reset();
 	log.debug("JSON: Get sensors values");
 	Poco::DynamicStruct jsonStruct = *(parser.parse(content).extract<Poco::JSON::Object::Ptr>());
-	if (device_name.empty()) {
-		device_name = jsonStruct["device"].toString();
-	}
+
+	if (device_name.empty())
+		device_name = jsonStruct["device"].toString() + "_" + jsonStruct["version"].toString();
+
 	if ((device_itr = devices.find(device_name)) == devices.end()) {
 		return values;
 	}

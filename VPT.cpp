@@ -256,6 +256,8 @@ void VPTSensor::detectDevices(void) {
 			string content = http_client->sendRequest(*it);
 			id = parseDeviceId(content);
 			device.name = json->getParameterValuesFromContent("device", content);
+			device.page_version = json->getParameterValuesFromContent("version", content);
+			device.specification = device.name +"_"+ device.page_version;
 			device.ip = *it;
 			device.sensor.version = 1;
 			device.sensor.euid = id;
@@ -264,7 +266,7 @@ void VPTSensor::detectDevices(void) {
 			device.sensor.values.clear();
 			device.wake_up_time = VPT_DEFAULT_WAKEUP_TIME;
 			device.time_left = VPT_DEFAULT_WAKEUP_TIME;
-			log.information("VPT: Detected device " + device.name + " with ip " + device.ip);
+			log.information("VPT: Detected device " + device.name + " with ip " + device.ip + " and version of web page " + device.page_version);
 			map_devices.insert({id, device});
 		}
 		catch (...) {/* exceptions are cought in the caller */}
@@ -399,7 +401,7 @@ bool VPTSensor::createMsg(VPTDevice &device) {
 	string website = http_client->sendRequest(device.ip);
 
 	try {
-		device.sensor.values = json->getSensors(website);
+		device.sensor.values = json->getSensors(website, device.specification);
 	}
 	catch (Poco::Exception & exc) {
 		log.error("VPT: " + exc.displayText());
@@ -408,7 +410,7 @@ bool VPTSensor::createMsg(VPTDevice &device) {
 
 	convertPressure(device.sensor.values);
 	device.sensor.pairs = device.sensor.values.size();
-	device.sensor.device_id = json->getID(device.name);
+	device.sensor.device_id = json->getID(device.specification);
 	msg.device = device.sensor;
 	msg.time = time(NULL);
 	return true;
@@ -426,7 +428,7 @@ void VPTSensor::convertPressure(vector<Value> &values) {
 void VPTSensor::pairDevices(void) {
 	for(auto device = map_devices.begin(); device != map_devices.end(); device++) {
 		try {
-			json->loadDeviceConfiguration(device->second.name);
+			json->loadDeviceConfiguration(device->second.name, device->second.page_version);
 			updateTimestampOnVPT(device->second, ACTION_PAIR);
 		}
 		catch (Poco::Exception &e) {
