@@ -132,6 +132,9 @@ unsigned int VPTSensor::nextWakeup(void)
 			min_time = device.time_left;
 	}
 
+	if (map_devices.empty())
+		min_time = VPT_DEFAULT_WAKEUP_TIME;
+
 	return min_time;
 }
 
