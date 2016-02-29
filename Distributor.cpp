@@ -155,8 +155,14 @@ std::string Distributor::convertToCSV(IOTMessage msg, bool full_format) {
 	ret += "pairs;" + toStringFromInt(msg.device.pairs) + "\n";
 
 	for (auto i : msg.device.values) {     // module_id, value
-		ret += "module_id;" + toStringFromHex(i.first) + ";";
-		ret += "value;" + toStringFromFloat(i.second) + "\n";
+		ret += "module_id;" + toStringFromHex(i.mid) + ";";
+		ret += "value;" + toStringFromFloat(i.value);
+		if (i.status) {
+			ret += "\n";
+		}
+		else {
+			ret += ";status;unavailable\n";
+		}
 	}
 	return ret;
 }
@@ -187,8 +193,14 @@ std::string Distributor::convertToPlainText(IOTMessage msg) {
 	//ret += "rssi:" + toStringFromInt(msg.device.rssi) + "\n";
 	ret += "sensor_values:\n";
 	for (auto i : msg.device.values) {     // type, offset, value
-		ret += "\tmodule_id:" + toStringFromHex(i.first) + ", ";
-		ret += "value:" + toStringFromFloat(i.second) + "\n";
+		ret += "\tmodule_id:" + toStringFromHex(i.mid) + ", ";
+		ret += "value:" + toStringFromFloat(i.value);
+		if (i.status) {
+			ret += "\n";
+		}
+		else {
+			ret += ";status;unavailable\n";
+		}
 	}
 	return ret;
 }

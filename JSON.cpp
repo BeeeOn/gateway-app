@@ -97,8 +97,8 @@ string JSONDevices::getParameterValuesFromContent(std::string parameter, std::st
 	return jsonStruct[parameter].toString();
 }
 
-vector<pair<int, float>> JSONDevices::getSensors(std::string content, std::string device_name) {
-	vector<pair<int, float>> values;
+vector<Value> JSONDevices::getSensors(std::string content, std::string device_name) {
+	vector<Value> values;
 	map<string, json_device>::iterator device_itr;
 	json_device * device_info;
 

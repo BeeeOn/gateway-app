@@ -112,9 +112,13 @@ void XMLTool::createDevice(XMLWriter* w, Device dev, bool debug, string proto, s
 		AttributesImpl attVal;
 		attVal.addAttribute("", "", "count", "", toStringFromInt(dev.values.size()));
 		w->startElement("", "values", "", attVal);
-		for (auto item : dev.values)
-			w->dataElement("", "", "value", toStringFromFloat(item.second), "module_id", toStringFromHex(item.first));   // convert to hex format (0x00)
-
+		for (auto item : dev.values){
+			if(item.status == true){
+				w->dataElement("", "", "value", toStringFromFloat(item.value), "module_id", toStringFromHex(item.mid));   // convert to hex format (0x00)
+			} else {
+				w->dataElement("", "", "value", toStringFromFloat(item.value), "module_id", toStringFromHex(item.mid), "status", "unavailable");
+			}
+		}
 		w->endElement("", "values", "");
 	}
 	w->endElement("", "device", "");

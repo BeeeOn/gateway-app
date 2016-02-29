@@ -189,7 +189,7 @@ void PanInterface::msgFromPAN(uint8_t msg_type, std::vector<uint8_t> data) {
 				sensor.euid = (sensor.euid << 8) + data.at(pos++);
 			}
 			// data[5]
-			int rssi = data.at(pos++);
+			float rssi = data.at(pos++);
 			// data[6..7]
 			sensor.device_id = (data.at(pos) << 8) + data.at(pos+1);
 			pos += 2;
@@ -210,7 +210,7 @@ void PanInterface::msgFromPAN(uint8_t msg_type, std::vector<uint8_t> data) {
 
 			log.information("Loaded device_id=" + toStringFromHex(sensor.device_id) + ", EUID=" + toStringFromLongHex(sensor.euid) + ", pairs: " + toStringFromInt(sensor.pairs));
 			for (int i=0; i < sensor.pairs; i++) {
-				unsigned int tmp_id   = data.at(pos++);			// 1B module_id to types_table
+				int tmp_id = data.at(pos++);			// 1B module_id to types_table
 
 				// Search for respective device (to module)
 				TT_Module module;
@@ -222,35 +222,40 @@ void PanInterface::msgFromPAN(uint8_t msg_type, std::vector<uint8_t> data) {
 					return;
 				}
 
-				int tmp_val = 0;
+				int tmp_val_orig = 0;
 				for (int i = 0; i < module.size; i++)
-					tmp_val = (tmp_val << 8) + data.at(pos++);
+					tmp_val_orig = (tmp_val_orig << 8) + data.at(pos++);
 
-				float tmp_val_float = tmp_val;
+				float tmp_val_float = tmp_val_orig;
 
 				msg.priority = (module.module_is_actuator ? MSG_PRIO_ACTUATOR : MSG_PRIO_SENSOR);
 
-				log.information("Loaded module_id " + toStringFromHex(tmp_id) + "(type \"" + toStringFromHex(module.module_type) + "\") with size [B]: " + std::to_string(module.size) + ". tmp_val: " + toStringFromFloat(tmp_val_float));
+				log.information("Loaded module_id " + toStringFromHex(tmp_id) + "(type \"" + toStringFromHex(module.module_type) + "\") with size [B]: " + std::to_string(module.size) + ". tmp_val_orig: " + toStringFromFloat(tmp_val_float));
 
 				tmp_val_float = agg->convertValue(module, tmp_val_float);
 
 				// Handle special values
 				// Batteries
 				float new_battery;
-				switch(module.module_id){
+				bool status = true;		// validity value
+				switch (module.module_id) {
+					// FIXME module_id and device_id must be tested here
 					case 0x03: 	//this module represents battery voltage
 							// convert from [V] to [%]
 						new_battery = convertBattery(tmp_val_float);
 						log.information("Converted battery - orig value: "+toStringFromFloat(tmp_val_float)+"V, new: " + toStringFromFloat(new_battery) + "%.");
 						sensor.values.push_back({tmp_id, new_battery});
 						break;
-					case 0x01: // outside temperature level
-						if (tmp_val_float > 1000) // 127,255,255,255
-							tmp_val_float = 0.0; // FIXME special case, where sensor is not connected
-						sensor.values.push_back({tmp_id, tmp_val_float});
-						break;
 					default:
-						sensor.values.push_back({tmp_id, tmp_val_float});
+						for (auto val_unavailable: module.unavailableValue) { // unavailable values can exists more
+							// convert unavailable value from table exactly the same as incoming value
+							if (tmp_val_orig == val_unavailable) {
+								tmp_val_float = 0.0;
+								status = false;
+								break;
+							}
+						}
+						sensor.values.push_back({tmp_id, tmp_val_float, status});
 				}
 			}
 			// Add RSSI if it is in module of speficied device

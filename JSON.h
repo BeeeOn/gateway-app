@@ -77,7 +77,7 @@ public:
 
 	int getID(std::string device_name);
 	std::string getParameterValuesFromContent(std::string parameter, std::string content);
-	std::vector<std::pair<int, float>> getSensors(std::string content, std::string device_name = "");
+	std::vector<Value> getSensors(std::string content, std::string device_name = "");
 
 private:
 	std::string devices_folder; ///< Folder contains files with description device

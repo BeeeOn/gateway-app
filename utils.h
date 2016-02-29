@@ -439,12 +439,43 @@ inline Poco::Logger& getErrLogger () {
 	return logger;
 }
 
+struct Value {
+	int mid;		// module_id
+	float value;	// value (float)
+	bool status;	// default: value is valid
+	Value():
+		mid(0),
+		value(0),
+		status(true)
+	{ }
+	Value(int _mid, float _value):
+		mid(_mid),
+		value(_value),
+		status(true)
+	{ }
+	Value(int _mid, float _value, bool _status):
+		mid(_mid),
+		value(_value),
+		status(_status)
+	{ }
+	void print(){
+		std::cout << "module_id: " << mid << std::endl;
+		std::cout << "value    : " << value << std::endl;
+		std::cout << "status   : " << status << std::endl;
+	}
+	bool operator==(const Value& rhs) const {
+	return mid == rhs.mid &&
+		   value == rhs.value &&
+		   status == rhs.status;
+	}
+};
+
 struct Device {
 	int version;		// Version of PAN<->adapter protocol
 	euid_t euid;
 	long int device_id;	// ID to device table
 	int pairs;		// Number of pairs
-	std::vector<std::pair<int, float> > values;
+	std::vector<Value> values;
 	Device():
 		version(0),
 		euid(0),
@@ -457,8 +488,8 @@ struct Device {
 		std::cout << "EUID     :" << euid << std::endl;
 		std::cout << "device_id:" << device_id << std::endl;
 		std::cout << "pairs    :" << pairs << std::endl;
-		for (std::pair<int, float> i : values) {
-			std::cout << "  id:" << toStringFromInt(i.first) << ", value:" << toStringFromFloat(i.second) << std::endl;
+		for (Value i : values) {
+			std::cout << "  module_id:" << i.mid << ", value:" << i.value << std::endl;
 		}
 	}
 };
@@ -544,6 +575,7 @@ struct TT_Module {
 	std::pair<bool, float> value_min;
 	std::pair<bool, float> value_max;
 	std::vector<int> module_values;
+	std::vector<int> unavailableValue; // value(s) defining the unavailability
 
 	/**
 	 * Constructor for module
@@ -556,8 +588,9 @@ struct TT_Module {
 	 * @param v_min Minimal value for sensor - composed from pair <enabled, minimum>
 	 * @param v_max Maximal value for sensor - composed from pair <enabled, maximum>
 	 * @param mod_vals List of values which can be reported. It might be empty if not defined
+	 * @param un_val Value defining the unavailability of module (or wrong value)
 	 */
-	TT_Module(int id, int mod_type, int sz, bool mod_act=false, std::string t_from="", std::string t_to="", std::pair<bool, float> v_min={false, 0}, std::pair<bool, float> v_max={false, 0}, std::vector<int> mod_vals={}) :
+	TT_Module(int id, int mod_type, int sz, bool mod_act=false, std::string t_from="", std::string t_to="", std::pair<bool, float> v_min={false, 0}, std::pair<bool, float> v_max={false, 0}, std::vector<int> mod_vals={}, std::vector<int> un_val={}) :
 		module_id(id),
 		module_type(mod_type),
 		size(sz),
@@ -566,7 +599,8 @@ struct TT_Module {
 		transform_to(t_to),
 		value_min(v_min),
 		value_max(v_max),
-		module_values(mod_vals)
+		module_values(mod_vals),
+		unavailableValue(un_val)
 	{ };
 
 	TT_Module() :
@@ -577,7 +611,9 @@ struct TT_Module {
 		transform_from(""),
 		transform_to(""),
 		value_min({false, 0}),
-		value_max({false, 0})
+		value_max({false, 0}),
+		module_values({}),
+		unavailableValue({})
 	{ };
 
 };
