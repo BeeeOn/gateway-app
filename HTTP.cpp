@@ -25,8 +25,9 @@ using namespace Poco::Net;
 using Poco::Logger;
 
 
-HTTPClient::HTTPClient(void) : log(Poco::Logger::get("Adaapp-VPT")) {
+HTTPClient::HTTPClient(uint16_t _port) : log(Poco::Logger::get("Adaapp-VPT")) {
 	receiveTime = Poco::Timespan(RECEIVE_TIMEOUT, 0);
+	port = _port;
 }
 
 vector<string> HTTPClient::discoverDevices(void) {
@@ -39,10 +40,11 @@ string HTTPClient::sendRequest(string ip, string url) {
 	request.clear();
 
 	http.setHost(ip);
+	http.setPort(port);
 	http.setTimeout(receiveTime);
 	request.setMethod(Poco::Net::HTTPRequest::HTTP_GET);
 	request.setURI(url);
-	log.information("HTTP: " + ip + ": " + url);
+	log.information("HTTP: " + ip + "(" + to_string(port) + ")" + ": " + url);
 	http.sendRequest(request);
 	istream & input = http.receiveResponse(response);
 

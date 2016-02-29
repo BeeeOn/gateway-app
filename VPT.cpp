@@ -98,7 +98,7 @@ VPTSensor::VPTSensor(IOTMessage _msg, shared_ptr<Aggregator> _agg) :
 	msg.offset = 0;
 	tt = fillDeviceTable();
 	json.reset(new JSONDevices);
-	http_client.reset(new HTTPClient);
+	http_client.reset(new HTTPClient(cfg->getUInt("port", 80)));
 }
 
 void VPTSensor::fetchAndSendMessage(map<euid_t, VPTDevice>::iterator &device)

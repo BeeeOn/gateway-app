@@ -32,7 +32,7 @@
  */
 class HTTPClient {
 public:
-	HTTPClient(void);
+	HTTPClient(uint16_t _port = 80);
 
 	std::vector<std::string> discoverDevices();
 
@@ -45,7 +45,7 @@ private:
 
 	Poco::Logger& log;
 	Poco::Timespan receiveTime;
-
+	uint16_t port;
 
 
 	void checkIPAddresses(Poco::Net::NetworkInterface::AddressList &iplist,
