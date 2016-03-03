@@ -139,7 +139,7 @@ void IOTReceiver::run() {
 #ifdef LEDS_ENABLED
 				LEDControl::blinkLED(LED_LIME);
 #endif
-				if (input_socket != nullptr)
+				if (input_socket.get() != nullptr)
 					input_socket->setReceiveTimeout(Poco::Timespan(RECEIVE_TIMEOUT,0));
 			}
 			catch (Poco::Exception& exc) {
