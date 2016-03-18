@@ -42,7 +42,6 @@ extern bool quit_global_flag;
 #include "Aggregator.h"
 #include "device_table.h"
 #include "utils.h"
-#include "XMLTool.h"
 
 class Aggregator;
 class SpiInterface;

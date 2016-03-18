@@ -25,7 +25,6 @@ extern bool quit_global_flag;
 
 #include "device_table.h"
 #include "utils.h"
-#include "XMLTool.h"
 
 #define PRESSURE_SENSOR_PATH "/sys/devices/platform/soc@01c00000/1c2b400.i2c/i2c-2/2-0077/pressure0_input"
 

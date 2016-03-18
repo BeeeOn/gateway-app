@@ -29,6 +29,5 @@
 #include "TCP.h"
 #include "VirtualSensor.h"
 #include "VPT.h"
-#include "XMLTool.h"
 
 #endif	/* MAIN_H */

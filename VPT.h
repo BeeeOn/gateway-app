@@ -30,7 +30,6 @@
 #include "HTTP.h"
 #include "JSON.h"
 #include "utils.h"
-#include "XMLTool.h"
 
 extern bool quit_global_flag;
 
