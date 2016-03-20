@@ -5,8 +5,15 @@
  * @brief
  */
 
+#include <utility>
+
+#include <Poco/AutoPtr.h>
+#include <Poco/Event.h>
+#include <Poco/Net/SocketAddress.h>
+
 #include "IOcontrol.h"
 #include "TCP.h"
+#include "XMLTool.h"
 
 using namespace std;
 using namespace Poco::Net;

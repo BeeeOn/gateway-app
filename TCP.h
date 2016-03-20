@@ -10,22 +10,22 @@
 
 extern bool quit_global_flag;
 
-#include <Poco/AutoPtr.h>
-#include <Poco/Event.h>
+#include <memory>
+#include <queue>
+#include <string>
+#include <thread>
+#include <vector>
+
 #include <Poco/Logger.h>
 #include <Poco/Mutex.h>
-#include <Poco/Net/SocketAddress.h>
-#include <Poco/Net/StreamSocket.h>
+#include <Poco/Net/SecureStreamSocket.h>
 #include <Poco/Runnable.h>
 #include <Poco/Semaphore.h>
 #include <Poco/StringTokenizer.h>
 #include <Poco/Util/IniFileConfiguration.h>
 
-#include "PanInterface.h"
+#include "Aggregator.h"
 #include "utils.h"
-#include "VirtualSensor.h"
-#include "VirtualSensorModule.h"
-#include "XMLTool.h"
 
 
 using MSG_TYPE = std::vector<char>;
