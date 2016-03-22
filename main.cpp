@@ -223,7 +223,7 @@ int main (int, char**) {
 
 		if (mod_vpt) {
 			log.information("Starting VPT module.");
-			vptsensor.reset(new VPTSensor(msg, agg));
+			vptsensor.reset(new VPTSensor(msg, agg, adapter_id));
 			vpt_thread.start(*vptsensor.get());
 			agg->setVPT(vptsensor);
 		}

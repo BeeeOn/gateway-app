@@ -61,7 +61,8 @@ static string generateSHAHash(const string & password, const string & rand_numbe
 	return DigestEngine::digestToHex(digest);
 }
 
-VPTSensor::VPTSensor(IOTMessage _msg, shared_ptr<Aggregator> _agg) :
+VPTSensor::VPTSensor(IOTMessage _msg, shared_ptr<Aggregator> _agg, long long int _adapter_id) :
+	adapter_id(to_string(_adapter_id)),
 	agg(_agg),
 	log(Poco::Logger::get("Adaapp-VPT")),
 	msg(_msg)

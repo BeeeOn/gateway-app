@@ -46,7 +46,7 @@ class Aggregator;
 
 class VPTSensor: public Poco::Runnable {
 public:
-	VPTSensor(IOTMessage _msg, std::shared_ptr<Aggregator>agg);
+	VPTSensor(IOTMessage _msg, std::shared_ptr<Aggregator>agg, long long int _adapter_id);
 
 	virtual void run();
 
@@ -55,6 +55,7 @@ public:
 	void parseCmdFromServer(Command cmd);
 
 private:
+	std::string adapter_id;
 	std::shared_ptr<Aggregator> agg;
 	std::unique_ptr<HTTPClient> http_client;
 	std::unique_ptr<JSONDevices> json;
