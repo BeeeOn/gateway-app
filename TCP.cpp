@@ -238,3 +238,57 @@ IOTReceiver::~IOTReceiver() {
 	send_semaphore->set();
 	send_thread->join();
 }
+
+pair<bool, Command> IOTReceiver::sendToServer(IOTMessage _msg) {
+	Command income_cmd;
+	_msg.state = "data";
+	unique_ptr<XMLTool> xml(new XMLTool(_msg));
+	string a_to_s = xml->createXML(A_TO_S);
+
+	log.information("Try to send this MSG to server:\n" + a_to_s);
+
+#ifdef LEDS_ENABLED
+	LEDControl::setLED(LED_PAN, true);
+#endif
+	SocketAddress sa(address, port);
+	try {
+		SecureStreamSocket str(sa);
+		str.sendBytes(a_to_s.c_str(), a_to_s.length());
+
+		char buffer[BUF_SIZE];
+		string message = "";
+		int n = 0;
+
+		do {
+			 n = str.receiveBytes(buffer, sizeof(buffer));
+			 message += string(buffer, n);
+			 // XXX Temporary solution to handle case with NULL byte
+			 // at the end of the message
+			 auto pos = message.find('\0');
+			 if (pos != message.npos) {
+				 message.erase(pos);
+				 break;
+			 }
+		} while (n == BUF_SIZE);
+
+#ifdef LEDS_ENABLED
+		LEDControl::setLEDAfterTimeout(LED_PAN, false, 200000);
+#endif
+
+		if (message != "") {
+			log.information("Received message:\n" + message);
+
+			unique_ptr<XMLTool> resp(new XMLTool());
+			income_cmd = resp->parseXML(message);
+
+			agg->parseCmd(income_cmd);
+		}
+		else {
+			log.information("Received empty message.");
+		}
+	}
+	catch (Poco::Exception& ex) {
+		return make_pair(false, income_cmd);
+	}
+	return make_pair(true, income_cmd);
+}

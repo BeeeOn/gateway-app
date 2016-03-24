@@ -35,6 +35,7 @@ extern bool quit_global_flag;
 #include "VirtualSensorModule.h"
 #include "VPT.h"
 #include "XMLTool.h"
+#include "TCP.h"
 
 struct Cache_Key {
 
@@ -76,6 +77,7 @@ struct Cache_Key {
 class PanInterface;
 class VirtualSensorModule;
 class Distributor;
+class IOTReceiver;
 
 /**
  * Class to watch invalid time. If there is no valid time, messages are not sent to the server and offset to blackout is computed. Correct time is computed after restoration of time.
@@ -107,7 +109,7 @@ public:
  */
 class Aggregator: public Poco::Runnable {
 public:
-	Aggregator(std::string _ip, int _port, long long int _adapter_id, std::shared_ptr<MosqClient> _mq);
+	Aggregator(long long int _adapter_id, std::shared_ptr<MosqClient> _mq);
 	void run();
 	std::pair<bool, Command> sendData(IOTMessage _msg);
 	virtual ~Aggregator();
@@ -116,6 +118,7 @@ public:
 	void setPSM(std::shared_ptr<PressureSensor> _psm);
 	void setPAN(std::shared_ptr<PanInterface> _pan);
 	void setVPT(std::shared_ptr<VPTSensor> _vpt);
+	void setTCP(std::shared_ptr<IOTReceiver> _tcp);
 	void storeCache();
 	void loadCache(void);
 	void parseCmd(Command cmd);
@@ -131,8 +134,6 @@ public:
 	void sendHABtoServer(std::string msg_text);
 
 private:
-	std::string ip_addr;
-	int port;
 	std::unique_ptr<Poco::FastMutex> cache_lock;
 	std::multimap <Cache_Key, IOTMessage> cache;
 	Poco::Logger& log;
@@ -143,6 +144,7 @@ private:
 	std::shared_ptr<VirtualSensorModule> vsm;
 	std::shared_ptr<PanInterface> pan;
 	std::shared_ptr<VPTSensor> vpt;
+	std::shared_ptr<IOTReceiver> tcp;
 
 	std::thread button_t;
 
@@ -155,7 +157,6 @@ private:
 	TimeWatchdog watchdog;
 	std::shared_ptr<MosqClient> mq;
 
-	std::pair<bool, Command> sendToServer(IOTMessage _msg);
 	void printCache(bool verbose);
 
 	IOTMessage iotmsg;

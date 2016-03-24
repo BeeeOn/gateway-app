@@ -64,9 +64,7 @@ void TimeWatchdog::run() {
 	active = false;
 }
 
-Aggregator::Aggregator(string _ip, int _port, long long int _adapter_id, shared_ptr<MosqClient> _mq) :
-	ip_addr(_ip),
-	port(_port),
+Aggregator::Aggregator(long long int _adapter_id, shared_ptr<MosqClient> _mq) :
 	log(Poco::Logger::get("Adaapp-AGG")),
 	cache_last_storing_time(time(NULL)),
 	adapter_id(_adapter_id),
@@ -240,7 +238,7 @@ pair<bool, Command> Aggregator::sendData(IOTMessage _msg) {
 
 	// Send valid message
 	if (isTimeValid(msg.time))
-		retval = sendToServer(msg);
+		retval = tcp->sendToServer(msg);
 	else {
 		// Message with invalid timestamp came in valid time
 		msg.valid = false;
@@ -264,60 +262,6 @@ pair<bool, Command> Aggregator::sendData(IOTMessage _msg) {
 	return retval;
 }
 
-pair<bool, Command> Aggregator::sendToServer(IOTMessage _msg) {
-	Command income_cmd;
-	_msg.state = "data";
-	unique_ptr<XMLTool> xml(new XMLTool(_msg));
-	string a_to_s = xml->createXML(A_TO_S);
-
-	log.information("Try to send this MSG to server:\n" + a_to_s);
-
-#ifdef LEDS_ENABLED
-	LEDControl::setLED(LED_PAN, true);
-#endif
-	SocketAddress sa(ip_addr, port);
-	try {
-		SecureStreamSocket str(sa);
-		str.sendBytes(a_to_s.c_str(), a_to_s.length());
-
-		char buffer[BUF_SIZE];
-		string message = "";
-		int n = 0;
-
-		do {
-			 n = str.receiveBytes(buffer, sizeof(buffer));
-			 message += string(buffer, n);
-			 // XXX Temporary solution to handle case with NULL byte
-			 // at the end of the message
-			 auto pos = message.find('\0');
-			 if (pos != message.npos) {
-				 message.erase(pos);
-				 break;
-			 }
-		} while (n == BUF_SIZE);
-
-#ifdef LEDS_ENABLED
-		LEDControl::setLEDAfterTimeout(LED_PAN, false, 200000);
-#endif
-
-		if (message != "") {
-			log.information("Received message:\n" + message);
-
-			unique_ptr<XMLTool> resp(new XMLTool());
-			income_cmd = resp->parseXML(message);
-
-			parseCmd(income_cmd);
-		}
-		else {
-			log.information("Received empty message.");
-		}
-	}
-	catch (Poco::Exception& ex) {
-		return make_pair(false, income_cmd);
-	}
-	return make_pair(true, income_cmd);
-}
-
 void Aggregator::setAgg(shared_ptr<Aggregator> _agg) {
 	agg = _agg;
 }
@@ -336,6 +280,10 @@ void Aggregator::setPSM(shared_ptr<PressureSensor> _psm) {
 
 void Aggregator::setVSM(shared_ptr<VirtualSensorModule> _vsm) {
 	vsm = _vsm;
+}
+
+void Aggregator::setTCP(shared_ptr<IOTReceiver> _tcp) {
+	tcp = _tcp;
 }
 
 void Aggregator::parseCmd(Command cmd) {
