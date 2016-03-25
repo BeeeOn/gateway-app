@@ -61,7 +61,7 @@ void PanInterface::sendCommandToPAN(Command cmd) {
 	}
 	else if (cmd.state == "clean") {
 		log.information("Clean command to delete sensor.");
-		deleteDevice(cmd.euid);		// TODO search for module_id refresh time first and sent to sensor then
+		deleteDevice(cmd.euid);
 	}
 	else if (cmd.state == "reset") {
 		log.information("Reset command to reset PAN coordinator to factory defaults.");
@@ -137,7 +137,14 @@ void PanInterface::setActuators(Command cmd) {
 }
 
 void PanInterface::deleteDevice(euid_t id) {
-	log.error("Delete device called with sensor_id = " + to_string(id) + "| This is not implemented yet!");
+	log.information("Delete device called with sensor_id = " + to_string(id));
+	vector<uint8_t> msg;
+	msg.push_back(UNPAIR_SENSOR);
+	msg.push_back(static_cast<uint8_t>((id & 0xFF000000) >> 24));
+	msg.push_back(static_cast<uint8_t>((id & 0xFF0000) >> 16));
+	msg.push_back(static_cast<uint8_t>((id & 0xFF00) >> 8));
+	msg.push_back(static_cast<uint8_t>(id & 0x00FF));
+	sendCmd(msg);
 }
 
 #define U0 1.8 // Drained batteries [V]
@@ -366,7 +373,6 @@ int theBigSwitch(int cmd, Logger& log) {
 		case(RELOAD_NETWORK):
 			log.information("RELOAD_NETWORK");
 			break;
-
 		case(FROM_SENSOR_MSG):
 			log.information("FROM_SENSOR_MSG");
 			break;
@@ -405,6 +411,10 @@ int theBigSwitch(int cmd, Logger& log) {
 
 		case(SENSOR_SLEEP):
 			log.information("SENSOR_SLEEP");
+			break;
+
+		case(UNPAIR_SENSOR):
+			log.information("UNPAIR_SENSOR");
 			break;
 
 		default:
