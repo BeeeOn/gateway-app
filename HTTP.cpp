@@ -8,6 +8,8 @@
 
 #include <tuple>
 
+#include <Poco/URI.h>
+
 #include "compat.h"
 #include "HTTP.h"
 
@@ -38,12 +40,14 @@ string HTTPClient::sendRequest(string ip, string url) {
 	http.reset();
 	response.clear();
 	request.clear();
+	string encoded_url;
 
+	Poco::URI::encode(url, " +", encoded_url);
 	http.setHost(ip);
 	http.setPort(port);
 	http.setTimeout(receiveTime);
 	request.setMethod(Poco::Net::HTTPRequest::HTTP_GET);
-	request.setURI(url);
+	request.setURI(encoded_url);
 	log.information("HTTP: " + ip + "(" + to_string(port) + ")" + ": " + url);
 	http.sendRequest(request);
 	istream & input = http.receiveResponse(response);
