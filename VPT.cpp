@@ -269,18 +269,28 @@ void VPTSensor::processCmdSet(Command cmd)
 		return;
 	}
 
-	string request = url_value;
 	if (url_value.empty()) {
 		log.error("VPT: Setting actuator failed - device or actuator not found");
 		return;
 	}
 
+	sendSetRequest(dev, url_value);
+}
+
+bool VPTSensor::sendSetRequest(VPTDevice &dev, std::string url_value) {
+	bool result = false;
+	string request = url_value;
 	if (!dev.password_hash.empty())
 		request += URL_PASSWORD_KEY + dev.password_hash;
 
 	std::string content;
 	for(int i = 0; i < SEND_RETRY; i++) {
-		content = http_client->sendRequest(dev.ip, request);
+		try {
+			content = http_client->sendRequest(dev.ip, request);
+		}
+		catch(Poco::Exception &exc) {
+			log.error("VPT: " + exc.displayText());
+		}
 
 		if (!json->isJSONFormat(content)) {
 			log.notice("VPT: Using password");
@@ -291,9 +301,12 @@ void VPTSensor::processCmdSet(Command cmd)
 			request = url_value + URL_PASSWORD_KEY + dev.password_hash;
 		}
 		else {
+			result = true;
 			break;
 		}
 	}
+
+	return result;
 }
 
 void VPTSensor::processCmdListen(void)

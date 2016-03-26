@@ -72,6 +72,7 @@ private:
 	void pairDevices();
 	euid_t parseDeviceId(std::string &content);
 	void updateDeviceWakeUp(euid_t euid, unsigned int time);
+	bool sendSetRequest(VPTDevice &dev, std::string url_value);
 	void processCmdSet(Command cmd);
 	void processCmdListen(void);
 };
