@@ -7,6 +7,7 @@
 
 #include <cassert>
 
+#include <Poco/DateTimeFormatter.h>
 #include <Poco/DigestStream.h>
 #include <Poco/RegularExpression.h>
 #include <Poco/SHA1Engine.h>
@@ -30,11 +31,26 @@ using Poco::Util::IniFileConfiguration;
 #define VPT_ID_MASK   0x00ffffff
 #define SEND_RETRY 3
 
+const string ACTION_PAIR = "P";
+const string ACTION_READ = "R";
+const string ACTION_SET = "S";
+
+const unsigned int ACTION_LENGTH = 1;
+
 const string URL_PASSWORD_KEY = "&__HOSTPWD=";
 
 static const string vpt_ini_file(void)
 {
 	return string(MODULES_DIR) + string(MOD_VPT_SENSOR) + ".ini";
+}
+
+static string generateBeeeonTimestamp(const string &adapter_id,
+		const string &ip_address,
+		const string &action)
+{
+	Poco::DateTime time;
+	return "BeeeOn " + ip_address + "/" + adapter_id + ":" +
+		Poco::DateTimeFormatter::format(time, "%d.%m.%Y+%z %H:%M:%S") + action;
 }
 
 static string extractRandomNumber(const string & content) {
@@ -112,6 +128,7 @@ void VPTSensor::fetchAndSendMessage(map<euid_t, VPTDevice>::iterator &device)
 			if (response.first) {
 				parseCmdFromServer(response.second);
 			}
+			updateTimestampOnVPT(device->second, ACTION_READ);
 		}
 		else {
 			log.error("Can't load new value of VPT sensor, send terminated");
@@ -274,7 +291,22 @@ void VPTSensor::processCmdSet(Command cmd)
 		return;
 	}
 
-	sendSetRequest(dev, url_value);
+	if (sendSetRequest(dev, url_value))
+		updateTimestampOnVPT(dev, ACTION_SET);
+
+}
+
+void VPTSensor::updateTimestampOnVPT(VPTDevice &dev, const std::string &action) {
+	string request = "/values.json?BEEE0=";
+
+	if (action.length() != ACTION_LENGTH) {
+		log.warning("VPT: Generate timestamp with bad action code");
+		return;
+	}
+
+	request += generateBeeeonTimestamp(adapter_id, http_client->findAdapterIP(dev.ip), action);
+	log.debug("VPT: Set BeeeOn timestamp");
+	sendSetRequest(dev, request);
 }
 
 bool VPTSensor::sendSetRequest(VPTDevice &dev, std::string url_value) {
@@ -358,6 +390,7 @@ void VPTSensor::pairDevices(void) {
 	for(auto device = map_devices.begin(); device != map_devices.end(); device++) {
 		try {
 			json->loadDeviceConfiguration(device->second.name);
+			updateTimestampOnVPT(device->second, ACTION_PAIR);
 		}
 		catch (Poco::Exception &e) {
 			log.error("VPT: " + e.displayText());
