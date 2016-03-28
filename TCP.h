@@ -62,6 +62,7 @@ private:
 public:
 		IOTReceiver(std::shared_ptr<Aggregator> _agg, std::string _address, int _port, IOTMessage _msg, long long int _adapter_id);
 		~IOTReceiver();
+		std::pair<bool, Command> sendToServer(IOTMessage _msg);
 
 		void keepaliveInit(Poco::Util::IniFileConfiguration * cfg);
 		void init();
