@@ -120,7 +120,7 @@
 #define SENSOR_SLEEP         0x9D
 #define WAIT_FOR_ADAPTER     0x9F
 #define PAN_RESET            0xA0
-#define SENSOR_FACTORY_RESET 0xA1
+#define UNPAIR_SENSOR        0xA1
 #define SET_ACTUATORS        0xB0
 
 /**
