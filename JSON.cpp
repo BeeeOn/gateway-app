@@ -20,7 +20,7 @@ using Poco::Logger;
 
 
 JSONDevices::JSONDevices(void) : log(Poco::Logger::get("Adaapp-VPT")) {
-	devices_folder = "/etc/beeeon/json_devices/";
+	devices_folder = MODULES_DIR + "json_devices/";
 	cfg = new Poco::Util::IniFileConfiguration(std::string(MODULES_DIR)+std::string(MOD_JSON)+".ini");
 }
 
