@@ -8,8 +8,8 @@ if [ "$FW" != "" ]; then
 fi
 
 # checking if "I want to use relative paths to configs!" mode is active (type whatever you want to params of this script)
-if [ $# -gt 0 ]; then
-  export RELATIVE_PATHS=true
+if [ -n "$1" ]; then
+  export RELATIVE_PATH="$1"
 fi
 
 

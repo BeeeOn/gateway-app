@@ -73,6 +73,8 @@ int main (int, char**) {
 	Logger& log = Poco::Logger::get("Adaapp-MAIN"); // get logging utility
 	log.setLevel("trace"); // set default lowest level
 
+	cerr << "Loading AdaApp.ini from " << CONFIG_FILE << endl;
+
 	/* Load main config file */
 	try {
 		cfg = new IniFileConfiguration(CONFIG_FILE);
@@ -84,6 +86,8 @@ int main (int, char**) {
 
 	setLoggingLevel(log, cfg); /* Set logging level from configuration file*/
 	setLoggingChannel(log, cfg); /* Set where to log (console, file, etc.)*/
+
+	cerr << "Loading modules configurations from " << MODULES_DIR << endl;
 
 	try {
 		cfg_pan = new IniFileConfiguration(string(MODULES_DIR)+string(MOD_PAN)+".ini");
