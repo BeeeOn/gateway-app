@@ -8,8 +8,8 @@
 
 #include <tuple>
 
+#include "compat.h"
 #include "HTTP.h"
-
 
 #define FOUR_BYTE 3
 
