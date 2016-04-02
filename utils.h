@@ -40,6 +40,8 @@
 #include <Poco/Util/IniFileConfiguration.h>
 #include <Poco/Util/XMLConfiguration.h>
 
+#include "compat.h"
+
 #ifndef FW_VERSION
 	#define FW_VERSION "Undefined version"
 #endif
