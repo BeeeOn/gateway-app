@@ -4,7 +4,7 @@
 # check (the newest) fw_version from git tag and export it to CMake - recommended format of tag is "vX.Y"
 FW=$(git describe --dirty)
 if [ "$FW" != "" ]; then
-  export FW_VERSION=$FW
+  export FW_VERSION="$FW"
 fi
 
 # checking if "I want to use relative paths to configs!" mode is active (type whatever you want to params of this script)
