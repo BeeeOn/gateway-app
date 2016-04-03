@@ -65,7 +65,6 @@ int main (int, char**) {
 
 	Poco::Thread agg_thread("Aggregator");
 	Poco::Thread vsm_thread("VSM");
-	Poco::Thread psm_thread("PSM");
 	Poco::Thread srv_thread("TCP");
 	Poco::Thread vpt_thread("VPT");
 
@@ -230,7 +229,7 @@ int main (int, char**) {
 		if (mod_pressure_sensor) {
 			log.information("Starting PressureSensors module.");
 			psm.reset(new PressureSensor(msg, agg));
-			psm_thread.start(*psm.get());
+			psm.get()->start();
 			agg->setPSM(psm);
 		}
 
@@ -255,7 +254,7 @@ int main (int, char**) {
 
 		if (mod_pressure_sensor) {
 			log.information("Stopping Pressure Sensor module...");
-			psm_thread.join();
+			psm.get()->stop();
 		}
 
 		if (mod_vpt) {
