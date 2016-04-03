@@ -47,10 +47,10 @@
 #define MSG_SIZE 32
 #define BUF_SIZE 512
 
-#ifndef RELATIVE_PATHS
+#ifndef RELATIVE_PATH
   #define MODULES_DIR (std::string)"/etc/beeeon/"
 #else
-  #define MODULES_DIR (std::string)"../../etc/beeeon/"
+  #define MODULES_DIR (std::string) RELATIVE_PATH "/beeeon/"
 #endif
 
 #define EEPROM_PATH "/sys/devices/platform/soc@01c00000/1c2b000.i2c/i2c-1/1-0050/eeprom"
@@ -59,10 +59,10 @@
 #define LED_LIME "/sys/devices/leds/leds/a10-olinuxino-lime:green:usr/"
 #define LED_PAN  "/sys/devices/leds/leds/a10-olinuxino-lime:green:LED1_OL/"
 
-#ifndef RELATIVE_PATHS
+#ifndef RELATIVE_PATH
   #define CONFIG_FILE "/etc/beeeon/AdaApp.ini"
 #else
-  #define CONFIG_FILE "../../etc/beeeon/AdaApp.ini"
+  #define CONFIG_FILE RELATIVE_PATH "/beeeon/AdaApp.ini"
 #endif
 
 // mainly for .ini files and logs

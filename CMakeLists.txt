@@ -26,10 +26,10 @@ else ()
     message (STATUS "Compiler was set to OLinuXino platform.")
 endif ()
 
-# checking if we want to compile AdaApp with relative paths (for debugging) - add any parameter to compile script (e.g. ./compile_ant....sh RP)
-if (DEFINED ENV{RELATIVE_PATHS})
-    message (STATUS "Compiler was set to compile AdaApp with RELATIVE PATHS!.")
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DRELATIVE_PATHS")
+# checking if we want to compile AdaApp with relative paths (for debugging) - add the relative prefix to compile script (e.g. ./compile_ant....sh .)
+if (DEFINED ENV{RELATIVE_PATH})
+    message (STATUS "Compiling AdaApp with RELATIVE PATH = '$ENV{RELATIVE_PATH}'.")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DRELATIVE_PATH='\"$ENV{RELATIVE_PATH}\"'")
 endif ()
 
 # checking FW version from git_tag and add it to CXX_FLAGS
