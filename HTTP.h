@@ -36,6 +36,8 @@ public:
 
 	std::vector<std::string> discoverDevices();
 
+	std::string findAdapterIP(std::string ip_address);
+
 	std::string sendRequest(std::string ip, std::string url = "/values.json");
 
 private:
@@ -52,6 +54,7 @@ private:
 		std::vector<std::pair<uint32_t, Poco::Net::IPAddress>> &networks);
 	std::vector<std::string> detectNetworkDevices(std::vector<std::pair<uint32_t, Poco::Net::IPAddress>>);
 	std::vector<std::pair<uint32_t, Poco::Net::IPAddress>> detectNetworkInterfaces();
-
+	bool isFromSubnet(Poco::Net::IPAddress &network_ip, Poco::Net::IPAddress &mask,
+			Poco::Net::IPAddress target_ip);
 };
 #endif

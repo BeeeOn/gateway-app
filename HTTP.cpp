@@ -8,6 +8,8 @@
 
 #include <tuple>
 
+#include <Poco/URI.h>
+
 #include "compat.h"
 #include "HTTP.h"
 
@@ -24,6 +26,7 @@ using namespace std;
 using namespace Poco::Net;
 using Poco::Logger;
 
+const string UNKNOWN_ADAPTER_IP = "0.0.0.0";
 
 HTTPClient::HTTPClient(uint16_t _port) : log(Poco::Logger::get("Adaapp-VPT")) {
 	receiveTime = Poco::Timespan(RECEIVE_TIMEOUT, 0);
@@ -34,16 +37,43 @@ vector<string> HTTPClient::discoverDevices(void) {
 	return detectNetworkDevices(detectNetworkInterfaces());
 }
 
+string HTTPClient::findAdapterIP(std::string target_ip) {
+	Poco::Net::NetworkInterface::NetworkInterfaceList list = Poco::Net::NetworkInterface::list(); ///< List of interfaces
+
+	if (!list.empty()) {
+		for(auto itr=list.begin(); itr!=list.end(); ++itr) {
+			if (itr->isPointToPoint())
+				continue;
+
+			NetworkInterface::AddressList iplist = itr->addressList();
+			IPAddress mask;
+			for(auto ip_itr=iplist.begin(); ip_itr != iplist.end(); ++ip_itr) {
+				if (ip_itr->get<IP_ADDR>().family() == Poco::Net::IPAddress::Family::IPv6)
+					continue;
+
+				mask = ip_itr->get<MASK_ADDR>();
+				IPAddress network_ip = ip_itr->get<IP_ADDR>() & mask;
+				//get<IP_BROADCAST>() does not work as expected
+				if (isFromSubnet(network_ip, mask, IPAddress(target_ip)))
+					return ip_itr->get<IP_ADDR>().toString();
+			}
+		}
+	}
+	return UNKNOWN_ADAPTER_IP; //not found IP
+}
+
 string HTTPClient::sendRequest(string ip, string url) {
 	http.reset();
 	response.clear();
 	request.clear();
+	string encoded_url;
 
+	Poco::URI::encode(url, " +", encoded_url);
 	http.setHost(ip);
 	http.setPort(port);
 	http.setTimeout(receiveTime);
 	request.setMethod(Poco::Net::HTTPRequest::HTTP_GET);
-	request.setURI(url);
+	request.setURI(encoded_url);
 	log.information("HTTP: " + ip + "(" + to_string(port) + ")" + ": " + url);
 	http.sendRequest(request);
 	istream & input = http.receiveResponse(response);
@@ -141,4 +171,16 @@ vector<pair<uint32_t, IPAddress>> HTTPClient::detectNetworkInterfaces(void) {
 		throw Poco::Exception("HTTP: Interfaces not found");
 	}
 	return networks;
+}
+
+bool HTTPClient::isFromSubnet(IPAddress &network_ip, IPAddress &mask, IPAddress target_ip) {
+	IPAddress broadcast_ip = network_ip | ~mask;
+	log.debug("HTTP: Network range: " + network_ip.toString() + " - " + broadcast_ip.toString());
+
+	if (target_ip.family() == network_ip.family() &&
+			target_ip > network_ip &&
+			target_ip < broadcast_ip)
+		return true;
+
+	return false;
 }
