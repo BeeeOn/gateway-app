@@ -30,7 +30,15 @@ using Poco::Util::IniFileConfiguration;
 #define VPT_ID_MASK   0x00ffffff
 #define SEND_RETRY 3
 
+const unsigned PRESSURE_MODULE_ID = 62;
+
+const unsigned CONVERT_VALUE = 1000;
+
 const string URL_PASSWORD_KEY = "&__HOSTPWD=";
+
+static float convertBarToHectopascals(float bar) {
+	return bar * CONVERT_VALUE;
+}
 
 static const string vpt_ini_file(void)
 {
@@ -333,11 +341,21 @@ bool VPTSensor::createMsg(VPTDevice &device) {
 		return false;
 	}
 
+	convertPressure(device.sensor.values);
 	device.sensor.pairs = device.sensor.values.size();
 	device.sensor.device_id = json->getID(device.name);
 	msg.device = device.sensor;
 	msg.time = time(NULL);
 	return true;
+}
+
+void VPTSensor::convertPressure(vector<Value> &values) {
+	for (auto itr = values.begin(); itr != values.end(); itr++) {
+		if (itr->mid == PRESSURE_MODULE_ID) {
+			itr->value = convertBarToHectopascals(itr->value);
+			break;
+		}
+	}
 }
 
 void VPTSensor::pairDevices(void) {
