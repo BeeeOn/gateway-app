@@ -67,6 +67,7 @@ private:
 
 	bool createMsg(VPTDevice &device);
 	std::string buildPasswordHash(std::string content);
+	void convertPressure(std::vector<Value> &values);
 	unsigned int nextWakeup(void);
 	void fetchAndSendMessage(std::map<euid_t, VPTDevice>::iterator &device);
 	void pairDevices();

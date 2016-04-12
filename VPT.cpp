@@ -39,6 +39,14 @@ const unsigned int ACTION_LENGTH = 1;
 
 const string URL_PASSWORD_KEY = "&__HOSTPWD=";
 
+const unsigned PRESSURE_MODULE_ID = 62;
+
+const unsigned CONVERT_VALUE = 1000;
+
+static float convertBarToHectopascals(float bar) {
+	return bar * CONVERT_VALUE;
+}
+
 static const string vpt_ini_file(void)
 {
 	return string(MODULES_DIR) + string(MOD_VPT_SENSOR) + ".ini";
@@ -379,11 +387,21 @@ bool VPTSensor::createMsg(VPTDevice &device) {
 		return false;
 	}
 
+	convertPressure(device.sensor.values);
 	device.sensor.pairs = device.sensor.values.size();
 	device.sensor.device_id = json->getID(device.name);
 	msg.device = device.sensor;
 	msg.time = time(NULL);
 	return true;
+}
+
+void VPTSensor::convertPressure(vector<Value> &values) {
+	for (auto itr = values.begin(); itr != values.end(); itr++) {
+		if (itr->mid == PRESSURE_MODULE_ID) {
+			itr->value = convertBarToHectopascals(itr->value);
+			break;
+		}
+	}
 }
 
 void VPTSensor::pairDevices(void) {
