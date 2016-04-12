@@ -73,7 +73,7 @@ void PressureSensor::run(){
 			log.error("Can't load new value of pressure sensor, send terminated");
 		}
 
-		for (unsigned int i=0;i<wake_up_time;i++) {
+		for (wake_up_counter = 0; wake_up_counter < wake_up_time; wake_up_counter++) {
 			if (quit_global_flag)
 				break;
 			sleep(1);
@@ -168,6 +168,7 @@ void PressureSensor::parseCmdFromServer(Command cmd){
 				else{
 					log.information("Changed refresh time to " + std::to_string(cmd.values[i].second) + "seconds" );
 					wake_up_time = new_wakeup;
+					wake_up_counter = new_wakeup;
 				}
 			} else
 				log.error("Set unknown module id, module id = "+ std::to_string(cmd.values[i].first));
