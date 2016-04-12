@@ -33,6 +33,7 @@ class Aggregator;
 class PressureSensor : public Poco::Runnable {
 	private:
 		unsigned int wake_up_time;
+		unsigned int wake_up_counter;
 		IOTMessage msg;
 		float pressureValue;
 		std::shared_ptr<Aggregator> agg;
