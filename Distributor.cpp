@@ -48,6 +48,10 @@ void Distributor::run() {
 		}
 		usleep(DIST_THREAD_SLEEP);
 	}
+
+	if (remove(geek_mode_pipe.c_str()) != 0) {
+		log.error("Can't remove geek pipe file: " + (string)strerror(errno));
+	}
 }
 
 Distributor::Distributor(shared_ptr<Aggregator> _agg, shared_ptr<MosqClient> _mq) :
@@ -206,21 +210,34 @@ std::string Distributor::convertToPlainText(IOTMessage msg) {
 }
 
 void Distributor::initGeekMode() {
+	remove(geek_mode_pipe.c_str());
 	geek_pipe_fd = mkfifo(geek_mode_pipe.c_str(), S_IWUSR | S_IRUSR | S_IRGRP | S_IROTH);
+	if (geek_pipe_fd < 0) {
+		log.error("Can't create geek pipe: " + (string)strerror(errno));
+	}
 }
 
 void Distributor::sendToNamedPipe(IOTMessage msg) {
 	sendToNamedPipe(convertToCSV(msg, false));
 }
 
-void Distributor::sendToNamedPipe (std::string msg) {
+void Distributor::sendToNamedPipe(std::string msg) {
 	if (geek_mode_enabled) {
 		geek_pipe_fd = open(geek_mode_pipe.c_str(), O_WRONLY | O_NONBLOCK);
-		if (geek_pipe_fd<1) {
-			log.error("Cant open geek pipe file.");
-			return;
+		int error_num = errno;
+		if (geek_pipe_fd < 0) {
+			if (error_num == ENXIO) {		// nobody read
+			}
+			else if (error_num == ENOENT || error_num == EISDIR) {
+				log.error("Geek pipe re-initialization: " + (string)strerror(error_num));
+				initGeekMode();	 // re-create - file doesn't exist OR Is a directory
+			}
+			else {
+				log.error("Can't open geek pipe file: " + (string)strerror(error_num));
+			}
+		} else {
+			write(geek_pipe_fd, msg.c_str(), msg.length());
 		}
-		write(geek_pipe_fd, msg.c_str(), msg.length());
 		close(geek_pipe_fd);
 	}
 }
