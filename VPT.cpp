@@ -31,6 +31,11 @@ using Poco::Util::IniFileConfiguration;
 #define VPT_ID_MASK   0x00ffffff
 #define SEND_RETRY 3
 
+#define HEX_NUMBER 16
+
+#define SUB_MAC_START 6
+#define SUB_MAC_LENGTH 6
+
 const string ACTION_PAIR = "P";
 const string ACTION_READ = "R";
 const string ACTION_SET = "S";
@@ -223,7 +228,7 @@ string VPTSensor::buildPasswordHash(std::string content) {
 euid_t VPTSensor::parseDeviceId(string &content)
 {
 	string id = json->getParameterValuesFromContent("id", content);
-	euid_t euid = stoull(id.substr(5,11), nullptr, 0);
+	euid_t euid = stoull(id.substr(SUB_MAC_START, SUB_MAC_LENGTH), nullptr, HEX_NUMBER);
 	return VPT_ID_PREFIX | (euid & VPT_ID_MASK);
 }
 
