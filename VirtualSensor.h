@@ -40,15 +40,19 @@ class VirtualSensor : public Poco::Runnable {
 		std::shared_ptr<Aggregator> agg;
 		Poco::Logger& log;
 
+		std::shared_ptr<std::thread> actuator_requests_thread;
+		std::shared_ptr<Poco::Mutex> queue_mutex;
+		std::shared_ptr<std::queue<std::pair<int,float> > > actuator_request_queue;
+
 	public:
 		Device sensor;          // Structure for conversion values from sensor to XML message
-		std::vector<VirtualSensorValue*> vsc;
+		std::vector<std::shared_ptr<VirtualSensorValue>> vsc;
 		VirtualSensor(Poco::AutoPtr<Poco::Util::IniFileConfiguration> cfg, IOTMessage _msg, unsigned int sensor_num, std::shared_ptr<Aggregator> _agg);
 		~VirtualSensor();
 
 		bool initSensor(Poco::AutoPtr<Poco::Util::IniFileConfiguration> cfg, unsigned int sensor_num);
 		int parseType(std::string type);
-		VirtualSensorValue* parseRegexp(std::string regexp);
+		std::shared_ptr<VirtualSensorValue> parseRegexp(std::string regexp, bool is_actuator);
 		IOTMessage createMsg();
 
 		void setWakeUpTime(long long int time) { wake_up_time = time; }
