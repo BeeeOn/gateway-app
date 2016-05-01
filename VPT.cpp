@@ -57,13 +57,27 @@ static const string vpt_ini_file(void)
 	return string(MODULES_DIR) + string(MOD_VPT_SENSOR) + ".ini";
 }
 
+static string getTimeZone() {
+	Poco::DateTime time;
+	string zone = Poco::DateTimeFormatter::format(time, "%z");
+	if (zone == "Z") {
+		zone = "00";
+	}
+	if (zone.length() > 2) {
+		zone = zone.substr(0, 2);
+	}
+	return zone;
+}
+
 static string generateBeeeonTimestamp(const string &adapter_id,
 		const string &ip_address,
 		const string &action)
 {
 	Poco::DateTime time;
 	return "BeeeOn " + ip_address + "/" + adapter_id + ":" +
-		Poco::DateTimeFormatter::format(time, "%d.%m.%Y+%z %H:%M:%S") + action;
+		Poco::DateTimeFormatter::format(time, "%d.%m.%Y+") +
+		getTimeZone() +
+		Poco::DateTimeFormatter::format(time, " %H:%M:%S") + action;
 }
 
 static string extractRandomNumber(const string & content) {
