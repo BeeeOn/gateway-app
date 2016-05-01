@@ -78,6 +78,8 @@
 #define MOD_XML         	(std::string)"xmltool"
 #define MOD_JSON         	(std::string)"json"
 
+#define DEFAULT_LOG_FORMAT	(std::string)"[%Y-%m-%d %H:%M:%S, %q, %s, %T] %t"
+
 #define MOSQ_TOPICS_PREFIX  (std::string)"BeeeOn/"
 #define MOSQ_TOPIC_DATA   MOSQ_TOPICS_PREFIX + (std::string)"sensors"
 #define MOSQ_TOPIC_INFO   MOSQ_TOPICS_PREFIX + (std::string)"service"
@@ -277,28 +279,40 @@ inline void setLoggingLevel(Poco::Logger& log,Poco::AutoPtr<Poco::Util::IniFileC
 }
 
 inline void setLoggingChannel(Poco::Logger& log,Poco::AutoPtr<Poco::Util::IniFileConfiguration> cfg) {
+	bool console_log = false;
 	Poco::AutoPtr<Poco::SplitterChannel> pSplitter(new Poco::SplitterChannel);
-	bool console_log = cfg->getBool("Logging.log_to_console",false);
-	if (console_log) {
-		Poco::AutoPtr<Poco::ConsoleChannel> pCons(new Poco::ConsoleChannel);
-		pSplitter->addChannel(pCons);
-	}
 
 	try{
 		std::string log_path = cfg->getString("Logging.log_to_file");
 		std::string log_file_rotation = cfg->getString("Logging.log_to_file_rotation", "512 K");
 		std::string log_purge_count = cfg->getString("Logging.log_to_file_purge_count", "1");
-		Poco::AutoPtr<Poco::FileChannel> pFile(new Poco::FileChannel(log_path));
-		pFile->setProperty("path",log_path);
-		pFile->setProperty("rotation",log_file_rotation);
-		pFile->setProperty("purgeCount", log_purge_count);
-		pSplitter->addChannel(pFile);
+		std::string log_pattern = cfg->getString("Logging.log_pattern", DEFAULT_LOG_FORMAT);
+		console_log = cfg->getBool("Logging.log_to_console", false);
 
+		Poco::AutoPtr<Poco::ConsoleChannel> pCons(new Poco::ConsoleChannel);
+		Poco::AutoPtr<Poco::FileChannel> pFile(new Poco::FileChannel(log_path));
+		pFile->setProperty("path", log_path);
+		pFile->setProperty("rotation", log_file_rotation);
+		pFile->setProperty("purgeCount", log_purge_count);
+		pFile->setProperty("archive", "timestamp");
+		pFile->setProperty("times", "local");
+		//pFile->setProperty("compress", "true"); // Archive log files using the gzip compression method
+
+		Poco::AutoPtr<Poco::PatternFormatter> pPF(new Poco::PatternFormatter);
+		pPF->setProperty("times", "local");
+		pPF->setProperty("pattern", log_pattern);
+
+		Poco::AutoPtr<Poco::FormattingChannel> pCC(new Poco::FormattingChannel(pPF, pCons));
+		Poco::AutoPtr<Poco::FormattingChannel> pFC(new Poco::FormattingChannel(pPF, pFile));
+
+		pSplitter->addChannel(pFC);
+		if (console_log) {
+			pSplitter->addChannel(pCC);
+		}
 	}
 	catch (Poco::Exception& ex) {
 		std::cerr << "Exception occured during logger setup: " << ex.displayText() << std::endl;
 	}
-	// TODO log to file
 	log.setChannel(pSplitter);
 }
 
