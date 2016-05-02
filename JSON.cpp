@@ -133,7 +133,10 @@ vector<Value> JSONDevices::getSensors(std::string content, std::string device_na
 				}
 			}
 			log.debug("JSON:\tID: " + to_string(get<1>(sensor)) + ", Value: " + to_string((int) number));
-			values.push_back({get<1>(sensor),number});
+			if (number ==  numeric_limits<float>::infinity())
+				values.push_back({get<1>(sensor), number, false});
+			else
+				values.push_back({get<1>(sensor), number});
 		}
 	}
 	return values;
