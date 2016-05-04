@@ -81,11 +81,11 @@ void VirtualSensorModule::fromServerCmd(Command cmd) {
 	else if (cmd.state == "listen") {
 		pairNewVS();
 	}
-
 	else if (cmd.state == "set") {
 		for (VirtualSensor& vs : sensors) {
 			if (vs.sensor.euid == cmd.euid) {
 				; // It shouldn't happen in case of VS, maybe just for virtual actuator
+			vs.parseCmdFromServer(cmd);
 			}
 		}
 	}

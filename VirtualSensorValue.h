@@ -22,10 +22,12 @@
  */
 class VirtualSensorValue {
 public:
+	bool is_actuator;
 	float from;
 	float to;
 	float step;
 	long int change_time;
+	long int switch_time;
 	std::string generator_type; // XXX enum might be better
 	float actual_value;
 	int module_id;
@@ -36,7 +38,10 @@ public:
 	virtual ~VirtualSensorValue();
 	void print();
 	void nextVal(Poco::Timer&);
+	void setNewVal(float val);
 	void startTimer();
+private:
+	std::shared_ptr<Poco::FastMutex> value_change_mutex;
 };
 
 #endif	/* VIRTUALSENSORVALUE_H */
