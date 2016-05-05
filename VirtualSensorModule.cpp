@@ -134,7 +134,7 @@ void VirtualSensorModule::loadSensors(shared_ptr<Aggregator> _agg) {
 	setLoggingLevel(log, cfg); /* Set logging level from configuration file*/
 	setLoggingChannel(log, cfg); /* Set where to log (console, file, etc.)*/
 
-	vs_paired_path = cfg->getString("virtual_sensor.pairing_file", "/tmp/vs_paired.cnt");
+	vs_paired_path = cfg->getString("virtual_sensor.pairing_file", "/var/lib/beeeon/vs_paired.cnt");
 
 	unsigned int i = 1;
 	while (!quit_global_flag) {
