@@ -69,7 +69,7 @@ class JSONDevices {
 public:
 	JSONDevices();
 
-	void loadDeviceConfiguration(std::string);
+	void loadDeviceConfiguration(std::string, std::string page_version);
 
 	bool isJSONFormat(std::string content);
 

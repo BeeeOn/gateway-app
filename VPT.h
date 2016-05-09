@@ -36,6 +36,8 @@ extern bool quit_global_flag;
 typedef struct VPTDevice {
 	std::string name;
 	std::string ip;
+	std::string page_version;
+	std::string specification;
 	std::string password_hash;
 	Device sensor;
 	unsigned int wake_up_time;
