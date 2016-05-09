@@ -39,7 +39,6 @@ int main (int, char**) {
 	quit_global_flag = false;
 	signal(SIGINT, killMe);
 	signal(SIGTERM, killMe);
-	signal(SIGKILL, killMe);
 
 #ifdef LEDS_ENABLED
 	LEDControl::initLED(LED_LIME);
