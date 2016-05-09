@@ -425,14 +425,19 @@ void VPTSensor::convertPressure(vector<Value> &values) {
 }
 
 void VPTSensor::pairDevices(void) {
+	vector<map<euid_t, VPTDevice>::iterator> devices_del;
+
 	for(auto device = map_devices.begin(); device != map_devices.end(); device++) {
 		try {
 			json->loadDeviceConfiguration(device->second.name, device->second.page_version);
 			updateTimestampOnVPT(device->second, ACTION_PAIR);
 		}
 		catch (Poco::Exception &e) {
-			map_devices.erase(device);
+			devices_del.push_back(device);
 			log.error("VPT: " + e.displayText());
 		}
 	}
+
+	for(auto it = devices_del.begin(); it != devices_del.end(); it++)
+		map_devices.erase(*it);
 }
