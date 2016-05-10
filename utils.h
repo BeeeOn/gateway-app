@@ -78,7 +78,7 @@
 #define MOD_XML         	(std::string)"xmltool"
 #define MOD_JSON         	(std::string)"json"
 
-#define DEFAULT_LOG_FORMAT	(std::string)"[%Y-%m-%d %H:%M:%S, %q, %s, %T] %t"
+#define DEFAULT_LOG_FORMAT	(std::string)"[%Y-%m-%d %H:%M:%S, %q%q, %s, %T] %t"
 
 #define MOSQ_TOPICS_PREFIX  (std::string)"BeeeOn/"
 #define MOSQ_TOPIC_DATA   MOSQ_TOPICS_PREFIX + (std::string)"sensors"
