@@ -214,10 +214,8 @@ void VirtualSensor::run() {
 			sleep(1);
 		}
 	}
-	while (!vsc.empty()){
-		delete vsc.back().get();
-		vsc.pop_back();
-	}
+	actuator_requests_thread->join();
+	vsc.clear();
 }
 
 void VirtualSensor::parseCmdFromServer(Command cmd) {
