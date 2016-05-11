@@ -40,6 +40,7 @@ public:
 	void nextVal(Poco::Timer&);
 	void setNewVal(float val);
 	void startTimer();
+	void setLoggingInfo(Poco::AutoPtr<Poco::Util::IniFileConfiguration> cfg);
 private:
 	std::shared_ptr<Poco::FastMutex> value_change_mutex;
 };
