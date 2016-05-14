@@ -259,6 +259,7 @@ pair<bool, Command> IOTReceiver::sendToServer(IOTMessage _msg) {
 	try {
 		SecureStreamSocket str(sa);
 		str.sendBytes(a_to_s.c_str(), a_to_s.length());
+		str.setReceiveTimeout(Poco::Timespan(RECEIVE_TIMEOUT,0));
 
 		char buffer[BUF_SIZE];
 		string message = "";
