@@ -139,6 +139,9 @@ void MosqClient::on_message (const struct mosquitto_message *message) {
 	if (msg_topic.compare("BeeeOn/openhab") == 0) {
 		newMsgFromHAB(msg_text);
 	}
+	if (msg_topic.compare("BeeeOn/param") == 0) {
+		askTheServer(msg_text);
+	}
 }
 
 void MosqClient::on_subscribe (int mid, int qos_count, const int *granted_qos) {
@@ -153,13 +156,27 @@ bool MosqClient::add_topic_to_subscribe (std::string topic_) {
 
 void MosqClient::newMsgFromHAB(std::string msg_text) {
 
-	//std::unique_ptr<OpenHAB> hab(new OpenHAB(iotmsg, agg));
-	//hab->msgFromMqtt(msg);
-	// "The object is automatically deleted when the scope ends."
-
 	if(agg.get()){
 		agg->sendHABtoServer(msg_text);
+	}
+	else {
+		log.information("newMsgFromHAB | Missing agg");
+	}
+}
+
+void MosqClient::askTheServer(string msg_text){
+	log.information("Mqtt ask the server for parameter " + msg_text);
+	if(agg.get()){
+		CmdParam param;
+		param.param_id = toIntFromString(msg_text);
+		param = agg->sendParam(param);
+		if (param.value.size()){
+			for(auto item: param.value){
+				log.information("Server answer: " + item.first);
+			}
+			log.information("Server answers done.");
+		} else log.information("No values from server");
 	} else {
-		log.information("Missing agg");
+		log.error("askTheServer | Missing agg");
 	}
 }

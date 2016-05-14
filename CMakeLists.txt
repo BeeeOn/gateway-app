@@ -62,7 +62,7 @@ check_cxx_function_exists(std::stoul ${CXX_FUNCTION_FAMILY_TO_NUMBER} HAVE_CXX_S
 check_cxx_function_exists(std::stoull ${CXX_FUNCTION_FAMILY_TO_NUMBER} HAVE_CXX_STOULL)
 check_cxx_function_exists(std::stof ${CXX_FUNCTION_FAMILY_TO_NUMBER} HAVE_CXX_STOF)
 
-set (ADAAPP_SOURCES main.cpp XMLTool.cpp PanInterface.cpp TCP.cpp Aggregator.cpp VirtualSensorModule.cpp VirtualSensor.cpp VirtualSensorValue.cpp Distributor.cpp IOcontrol.cpp MosqClient.cpp PressureSensor.cpp Openhab.cpp VPT.cpp JSON.cpp HTTP.cpp)
+set (ADAAPP_SOURCES main.cpp XMLTool.cpp PanInterface.cpp TCP.cpp Aggregator.cpp VirtualSensorModule.cpp VirtualSensor.cpp VirtualSensorValue.cpp Distributor.cpp IOcontrol.cpp MosqClient.cpp PressureSensor.cpp Openhab.cpp VPT.cpp JSON.cpp HTTP.cpp Parameters.cpp)
 
 add_executable (${PROJECT_NAME} ${ADAAPP_SOURCES})
 

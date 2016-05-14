@@ -44,7 +44,7 @@ XMLTool::XMLTool(IOTMessage _msg) :
 
 /**
  * Create message which can be sent to server.
- * @param type Message type (0 - A_TO_S, 1 - INIT)
+ * @param type Message type (0 - A_TO_S, 1 - INIT, 2 - PARAM)
  * @return Created message in string
  */
 string XMLTool::createXML(int type) {
@@ -74,6 +74,9 @@ string XMLTool::createXML(int type) {
 		else if (type == INIT) {
 			writer.characters(" ");
 		}
+		else if (type == PARAM) {
+			createParam(&writer, msg.params, msg.state);
+		}
 
 		writer.endElement("", "adapter_server", "");
 		writer.endDocument();
@@ -96,6 +99,9 @@ void XMLTool::createDevice(XMLWriter* w, Device dev, bool debug, string proto, s
 	AttributesImpl att;
 	att.addAttribute("", "", "euid", "", toStringFromLongHex(dev.euid));
 	att.addAttribute("", "", "device_id", "", toStringFromLongHex(dev.device_id, 2));
+	if(dev.name != ""){
+		att.addAttribute("", "", "name", "", dev.name);
+	}
 
 	w->startElement("", "device", "", att);
 
@@ -122,6 +128,22 @@ void XMLTool::createDevice(XMLWriter* w, Device dev, bool debug, string proto, s
 		w->endElement("", "values", "");
 	}
 	w->endElement("", "device", "");
+}
+
+void XMLTool::createParam(XMLWriter* w, CmdParam par, string state){
+	AttributesImpl att;
+	att.addAttribute("", "", "param_id", "", toStringFromInt(par.param_id));
+	if (par.euid > 0)
+		att.addAttribute("", "", "euid", "", toStringFromLongHex(par.euid));
+
+	w->startElement("", "parameter", "", att);
+
+	if (state == "parameters" && par.value.size()) {
+		for (auto item: par.value){
+			w->dataElement("", "", "value", item.first);
+		}
+	}
+	w->endElement("", "parameter", "");
 }
 
 /**
@@ -175,18 +197,52 @@ Command XMLTool::parseXML(string str) {
 			}
 
 			else if (pNode->nodeName().compare("value") == 0) {
-				float val = atof(pNode->innerText().c_str());
+				if(cmd.state == "getparameters" || cmd.state == "parameters"){
+					string inner = pNode->innerText();
+					string device_id = "";
 
+					if (pNode->hasAttributes()) {
+						attributes = pNode->attributes();
+						string device_id = "";
+						for(unsigned int i = 0; i < attributes->length(); i++) {
+							attribute = attributes->item(i);
+							if (attribute->nodeName().compare("device_id") == 0) {
+								device_id = toNumFromString(attribute->nodeValue());
+							}
+						}
+						attributes->release();
+					}
+					cmd.params.value.push_back({inner, device_id});
+				}
+				else {
+					float val = atof(pNode->innerText().c_str());
+
+					if (pNode->hasAttributes()) {
+						int module_id = 0;
+						attributes = pNode->attributes();
+						for(unsigned int i = 0; i < attributes->length(); i++) {
+							attribute = attributes->item(i);
+							if (attribute->nodeName().compare("module_id") == 0) {
+								module_id = toNumFromString(attribute->nodeValue());
+							}
+						}
+						cmd.values.push_back({module_id, val});  //TODO Hex number is processed wrongly
+						attributes->release();
+					}
+				}
+			}
+			else if (pNode->nodeName().compare("parameter") == 0) {
 				if (pNode->hasAttributes()) {
-					int module_id = 0;
 					attributes = pNode->attributes();
 					for(unsigned int i = 0; i < attributes->length(); i++) {
 						attribute = attributes->item(i);
-						if (attribute->nodeName().compare("module_id") == 0) {
-							module_id = toNumFromString(attribute->nodeValue());
+						if (attribute->nodeName().compare("param_id") == 0 || attribute->nodeName().compare("id") == 0) {
+							cmd.params.param_id = toNumFromString(attribute->nodeValue());
+						}
+						else if (attribute->nodeName().compare("euid") == 0) {
+							cmd.params.euid = toNumFromString(attribute->nodeValue());
 						}
 					}
-					cmd.values.push_back({module_id, val});  //TODO Hex number is processed wrongly
 					attributes->release();
 				}
 			}

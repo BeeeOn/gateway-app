@@ -64,10 +64,10 @@ void TimeWatchdog::run() {
 	active = false;
 }
 
-Aggregator::Aggregator(long long int _adapter_id, shared_ptr<MosqClient> _mq) :
+Aggregator::Aggregator(IOTMessage _msg, shared_ptr<MosqClient> _mq) :
 	log(Poco::Logger::get("Adaapp-AGG")),
 	cache_last_storing_time(time(NULL)),
-	adapter_id(_adapter_id),
+	msg_default(_msg),
 	watchdog(std::chrono::steady_clock::now()),
 	mq(_mq)
 {
@@ -134,11 +134,13 @@ void Aggregator::run() {
 	setLoggingLevel(log, cfg); /* Set logging level from configuration file*/
 	setLoggingChannel(log, cfg); /* Set where to log (console, file, etc.)*/
 
+	param = shared_ptr<Parameters> (new Parameters(agg, msg_default));
+
 	Poco::Thread distThread("Distributor thread");
 	if (dist)
 		distThread.start(*dist);
 
-	std::unique_ptr<OpenHAB> haba(new OpenHAB(iotmsg));
+	std::unique_ptr<OpenHAB> haba(new OpenHAB(msg_default));
 	hab = std::move(haba);
 
 	// Button's handler thread
@@ -237,15 +239,15 @@ pair<bool, Command> Aggregator::sendData(IOTMessage _msg) {
 	pair<bool, Command> retval = std::pair<bool, Command>(false, c);
 
 	// Send valid message
-	if (isTimeValid(msg.time))
+	if (isTimeValid(msg.time)){
 		retval = tcp->sendToServer(msg);
-	else {
+	} else {
 		// Message with invalid timestamp came in valid time
 		msg.valid = false;
 		msg.offset = watchdog.getOffset();
 	}
 
-	if (!retval.first) {
+	if (!retval.first && msg.state == "data") {
 		if (isTimeValid(msg.time))
 			log.warning("Failed to send message (ts=" + to_string(msg.time) + ") to server - save to cache!");
 		else
@@ -286,7 +288,12 @@ void Aggregator::setTCP(shared_ptr<IOTReceiver> _tcp) {
 	tcp = _tcp;
 }
 
+void Aggregator::setHAB(shared_ptr<OpenHAB> _hab) {
+	hab = _hab;
+}
+
 void Aggregator::parseCmd(Command cmd) {
+	log.information("Agg: parseCmd, Command = " + cmd.state);
 
 	if (cmd.state == "listen") {
 		if (vsm && vsm->unpairedSensorsLeft()) {
@@ -300,6 +307,13 @@ void Aggregator::parseCmd(Command cmd) {
 		if (vpt) {
 			vpt->parseCmdFromServer(cmd);
 		}
+		if (hab) {
+			hab->cmdFromServer(cmd);
+		}
+	}
+	else if (cmd.state == "getparameters" || cmd.state == "parameters"){
+		log.information("Incoming GET-PARAMETER command");
+		param->cmdFromServer(cmd);
 	}
 	else {
 		if (psm && psm->isPressureSensor(cmd.euid)) {
@@ -314,12 +328,9 @@ void Aggregator::parseCmd(Command cmd) {
 			log.information("Sending incoming command to VPT");
 			vpt->parseCmdFromServer(cmd);
 		}
-		else if (hab && hab->isOpenhabDevice(cmd.device_id)) {
+		else if (hab) {
 			log.information("Sending incoming command to HAB");
-			std::vector<std::string> vales = hab->cmdFromServer(cmd);
-			for(auto str: vales){
-				mq->send_message(str,("BeeeOn/openhab/" + toStringFromLongInt(cmd.euid)),0);
-			}
+			hab->cmdFromServer(cmd);
 		}
 		else if (pan.get() != nullptr) {
 			log.information("Sending incoming command to PAN");
@@ -446,7 +457,7 @@ void Aggregator::loadCache() {
 			msg.valid = false;
 			log.information("This message has been stored with invalid TS, but now the time is not valid neither - so i can count offset from msg TS and actual TS.");
 		}
-		msg.adapter_id = toStringFromLongHex(adapter_id);
+		msg.adapter_id = msg_default.adapter_id;
 		cache.insert(std::pair<Cache_Key, IOTMessage>(Cache_Key(msg.priority, msg.time), msg));
 	}
 	log.information("Loading of persistent cache is complete. Cache contains " + std::to_string(cache.size()) + " items.");
@@ -557,12 +568,16 @@ float Aggregator::convertValue(TT_Module type, float old_val, bool reverse) {
 	return new_val;
 }
 
-void Aggregator::setIOTmsg(IOTMessage msg){
-	iotmsg = msg;
+void Aggregator::sendHABtoServer(std::string msg_text){
+	if (hab) {
+		IOTMessage msg = hab->msgFromMqtt(msg_text);
+		if(msg.time != 0)
+			sendData(msg);
+	} else {
+		log.information("New message on MQTT from OpenHAB, but module in NOT enabled.");
+	}
 }
 
-void Aggregator::sendHABtoServer(std::string msg_text){
-	IOTMessage msg = hab->msgFromMqtt(msg_text);
-	if(msg.time != 0)
-		sendData(msg);
+CmdParam Aggregator::sendParam(CmdParam par){
+	return param->askServer(par);
 }

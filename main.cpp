@@ -199,9 +199,8 @@ int main (int, char**) {
 		}
 
 		/* Mandatory module for sending and receiving data */
-		shared_ptr<Aggregator> agg (new Aggregator(adapter_id, mosq));
+		shared_ptr<Aggregator> agg (new Aggregator(msg, mosq));
 		agg->setAgg(agg);
-		agg->setIOTmsg(msg);
 		agg_thread.start(*agg.get());
 
 		msg.state = "register";
