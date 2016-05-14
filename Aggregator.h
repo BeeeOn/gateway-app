@@ -134,6 +134,7 @@ public:
 
 	void setAgg(std::shared_ptr<Aggregator> _agg);
 	void sendHABtoServer(std::string msg_text);
+	void sendToMQTT(std::string msg_text, std::string topic);
 	CmdParam sendParam(CmdParam param);
 
 private:

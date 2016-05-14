@@ -55,6 +55,7 @@ int main (int, char**) {
 	bool mod_pressure_sensor = false;
 	bool mod_mqtt = false;
 	bool mod_vpt = false;
+	bool mod_openhab = false;
 
 	AutoPtr<IniFileConfiguration> cfg;
 	AutoPtr<IniFileConfiguration> cfg_pan;
@@ -62,12 +63,14 @@ int main (int, char**) {
 	AutoPtr<IniFileConfiguration> cfg_pressure_sensor;
 	AutoPtr<IniFileConfiguration> cfg_vpt;
 	AutoPtr<IniFileConfiguration> cfg_mqtt;
+	AutoPtr<IniFileConfiguration> cfg_hab;
 
 	Poco::Thread agg_thread("Aggregator");
 	Poco::Thread vsm_thread("VSM");
 	Poco::Thread psm_thread("PSM");
 	Poco::Thread srv_thread("TCP");
 	Poco::Thread vpt_thread("VPT");
+	Poco::Thread hab_thread("HAB");
 
 	Logger& log = Poco::Logger::get("Adaapp-MAIN"); // get logging utility
 	log.setLevel("trace"); // set default lowest level
@@ -112,6 +115,12 @@ int main (int, char**) {
 	}
 	catch (...) { }
 
+	try { // OpenHAB
+		cfg_hab = new IniFileConfiguration(string(MODULES_DIR)+string(MOD_OPENHAB)+".ini");
+		mod_openhab = cfg_hab->getBool(string(MOD_OPENHAB)+".enabled", false);
+	}
+	catch (...) { }
+
 	try {
 		cfg_mqtt = new IniFileConfiguration(string(MODULES_DIR)+string(MOD_MQTT)+".ini");
 		mod_mqtt = cfg_mqtt->getBool(string(MOD_MQTT)+".enabled", false);
@@ -147,6 +156,7 @@ int main (int, char**) {
 	log.information(MOD_VIRTUAL_SENSOR  + ":  " + ((mod_virtual_sensor) ? " ON" : "OFF"));
 	log.information(MOD_MQTT            + ":            " + ((mod_mqtt) ? " ON" : "OFF"));
 	log.information(MOD_VPT_SENSOR      + ":      " +        ((mod_vpt) ? " ON" : "OFF"));
+	log.information(MOD_OPENHAB         + ":         " + ((mod_openhab) ? " ON" : "OFF"));
 
 	srand(time(0));
 
@@ -181,6 +191,7 @@ int main (int, char**) {
 		shared_ptr<MosqClient> mosq;
 		shared_ptr<PanInterface> pan;
 		shared_ptr<VPTSensor> vptsensor;
+		shared_ptr<OpenHAB> hab;
 		shared_ptr<PressureSensor> psm;
 		shared_ptr<VirtualSensorModule> vsm;
 
@@ -226,6 +237,13 @@ int main (int, char**) {
 			agg->setVPT(vptsensor);
 		}
 
+		if (mod_openhab) {
+			log.information("Starting OpenHAB module.");
+			hab.reset(new OpenHAB(msg, agg));
+			hab_thread.start(*hab.get());
+			agg->setHAB(hab);
+		}
+
 		if (mod_pressure_sensor) {
 			log.information("Starting PressureSensors module.");
 			psm.reset(new PressureSensor(msg, agg));
@@ -260,6 +278,11 @@ int main (int, char**) {
 		if (mod_vpt) {
 			log.information("Stopping VPT Sensor module...");
 			vpt_thread.join();
+		}
+
+		if (mod_openhab) {
+			log.information("Stopping OpenHAB module...");
+			hab_thread.join();
 		}
 
 		if (mod_mqtt) {

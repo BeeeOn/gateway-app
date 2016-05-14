@@ -140,9 +140,6 @@ void Aggregator::run() {
 	if (dist)
 		distThread.start(*dist);
 
-	std::unique_ptr<OpenHAB> haba(new OpenHAB(msg_default));
-	hab = std::move(haba);
-
 	// Button's handler thread
 	button_t = std::thread (buttonControl);
 
@@ -576,6 +573,16 @@ void Aggregator::sendHABtoServer(std::string msg_text){
 	} else {
 		log.information("New message on MQTT from OpenHAB, but module in NOT enabled.");
 	}
+}
+
+/**
+ * Forwarding message from modul Openhab to MosqClient
+ * @param msq_text Message content
+ * @param topic Name of topic on MQTT
+ */
+void Aggregator::sendToMQTT(std::string msg_text, std::string topic){
+	log.information("Agg: OH: msg from server to MQTT");
+	mq->send_message(msg_text,topic,0);
 }
 
 CmdParam Aggregator::sendParam(CmdParam par){
