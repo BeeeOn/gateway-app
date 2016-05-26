@@ -237,7 +237,7 @@ int main (int, char**) {
 			agg->setVPT(vptsensor);
 		}
 
-		if (mod_openhab) {
+		if (mod_openhab && mod_mqtt) {
 			log.information("Starting OpenHAB module.");
 			hab.reset(new OpenHAB(msg, agg));
 			hab_thread.start(*hab.get());
@@ -280,7 +280,7 @@ int main (int, char**) {
 			vpt_thread.join();
 		}
 
-		if (mod_openhab) {
+		if (mod_openhab && mod_mqtt) {
 			log.information("Stopping OpenHAB module...");
 			hab_thread.join();
 		}

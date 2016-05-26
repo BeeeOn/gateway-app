@@ -177,10 +177,8 @@ void OpenHAB::checkNews(){
  */
 void OpenHAB::run(){
 	log.information("OH: Starting OpenHAB thread...");
-	checkNews();
+	checkNews();	// get list of paired devices
 	while(!quit_global_flag) {
-		if (quit_global_flag)
-			break;
 		sleep(1);
 		if (this->checktime > 0)
 			this->checktime--;
