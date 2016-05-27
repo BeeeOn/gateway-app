@@ -221,38 +221,57 @@ int main (int, char**) {
 
 		// BeeeOn PAN coordinator module
 		if (mod_pan) {
-			log.information("Starting PAN module.");
+			log.information("Creating PAN module.");
 			pan.reset(new PanInterface(msg, agg));
 			pan->set_pan(pan); // XXX Function name should be same
 			agg->setPAN(pan);
 		}
 
 		if (mod_vpt) {
-			log.information("Starting VPT module.");
+			log.information("Creating VPT module.");
 			vptsensor.reset(new VPTSensor(msg, agg, adapter_id));
-			vpt_thread.start(*vptsensor.get());
 			agg->setVPT(vptsensor);
 		}
 
 		if (mod_openhab && mod_mqtt) {
-			log.information("Starting OpenHAB module.");
+			log.information("Creating OpenHAB module.");
 			hab.reset(new OpenHAB(msg, agg));
-			hab_thread.start(*hab.get());
 			agg->setHAB(hab);
 		}
 
 		if (mod_pressure_sensor) {
-			log.information("Starting PressureSensors module.");
+			log.information("Creating PressureSensors module.");
 			psm.reset(new PressureSensor(msg, agg));
-			psm_thread.start(*psm.get());
 			agg->setPSM(psm);
 		}
 
 		if (mod_virtual_sensor) {
-			log.information("Starting VirtualSensors module.");
+			log.information("Creating VirtualSensors module.");
 			vsm.reset(new VirtualSensorModule(msg, agg));
-			vsm_thread.start(*vsm.get());
 			agg->setVSM(vsm);
+		}
+
+		agg_thread.start(*agg.get());
+		srv_thread.start(*receiver.get());
+
+		if (mod_vpt) {
+			log.information("Starting VPT module.");
+			vpt_thread.start(*vptsensor.get());
+		}
+
+		if (mod_openhab && mod_mqtt) {
+			log.information("Starting OpenHAB module.");
+			hab_thread.start(*hab.get());
+		}
+
+		if (mod_pressure_sensor) {
+			log.information("Starting PressureSensors module.");
+			psm_thread.start(*psm.get());
+		}
+
+		if (mod_virtual_sensor) {
+			log.information("Starting VirtualSensors module.");
+			vsm_thread.start(*vsm.get());
 		}
 
 		/* "Endless" loop waiting for SIGINT/SIGTERM */
