@@ -464,11 +464,13 @@ inline Poco::Logger& getErrLogger () {
 struct CmdParam {
 	int param_id;			// id of requirement
 	euid_t euid;			// optional
+	bool status;			// true = all is ok; false = something is wrong (server or format message)
 	std::vector<std::pair<std::string, std::string> > value;	// array of strings
 			// pair (firts = value, second = attribute (optional))
 	CmdParam() :
 		param_id(0),
-		euid(0)
+		euid(0),
+		status(false)
 	{ };
 };
 

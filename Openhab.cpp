@@ -145,8 +145,10 @@ bool OpenHAB::cmdFromServer(Command cmd){
 void OpenHAB::checkNews(){
 	CmdParam param;
 	param.param_id = 1003;
+	log.information("Check what is new = get paired list");
 	param = agg->sendParam(param);
-	log.information("Check what is new");
+	if (! param.status)
+		return;
 
 	if (param.value.size()){
 		for(auto item: param.value){

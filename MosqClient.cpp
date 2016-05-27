@@ -170,6 +170,8 @@ void MosqClient::askTheServer(string msg_text){
 		CmdParam param;
 		param.param_id = toIntFromString(msg_text);
 		param = agg->sendParam(param);
+		if (! param.status)
+			return;
 		if (param.value.size()){
 			for(auto item: param.value){
 				log.information("Server answer: " + item.first);

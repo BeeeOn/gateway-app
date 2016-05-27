@@ -37,6 +37,8 @@ Parameters::Parameters(shared_ptr<Aggregator> _agg, IOTMessage _msg) :
 	msg.state = "getparameters";
 	msg.priority = MSG_PRIO_PARAM;
 	msg.offset = 0;
+	if(toFloatFromString(msg.protocol_version) < 1.1)
+		log.error("Old protocol version!");
 
 	log.information("=== Adaapp Started ===");
 }
@@ -88,8 +90,14 @@ CmdParam Parameters::askServer(CmdParam cmd_request)
 {
 	if (cmd_request.param_id < 1000 || cmd_request.param_id > 1999){
 		log.error("Ask the Server: Wrong param_id");
+		cmd_request.status = false;
 		return cmd_request;	// id of requirement must be specified
 	}
+	if(toFloatFromString(msg.protocol_version) < 1.1){	// old protocol version
+		cmd_request.status = false;
+		return cmd_request;
+	}
+
 	msg.params = cmd_request;		// add parameters block (struct)
 	msg.state = "getparameters";	// for request is this state
 	msg.time = time(NULL);			// set actual time
@@ -98,9 +106,11 @@ CmdParam Parameters::askServer(CmdParam cmd_request)
 	if (response.first && response.second.state == "parameters"){
 		log.information("Ask the Server | return OK");
 		justPrintToLog(response.second.params);
+		response.second.params.status = true;
 		return response.second.params;	// prayers were answered
 	}
 	log.information("Ask the Server | return FAIL");
+	cmd_request.status = false;
 	return cmd_request;
 }
 
