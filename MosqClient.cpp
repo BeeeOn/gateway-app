@@ -22,6 +22,7 @@ MosqClient::MosqClient(std::string client_id_, std::string main_topic_, std::str
 	host(host_),
 	port(port_),
 	log(Poco::Logger::get("Adaapp-MQTT")),
+	agg(nullptr),
 	connected(false)
 {
 	log.setLevel("trace"); // set default lowest level
@@ -52,7 +53,7 @@ bool MosqClient::send_message(std::string message, std::string topic_, int qos) 
 	return ((publish(NULL, topic_.c_str(), message.length(), message.c_str(), qos)) == MOSQ_ERR_SUCCESS );
 }
 
-void MosqClient::setAgg(shared_ptr<Aggregator> agg_) {
+void MosqClient::setAgg(Aggregator* agg_) {
 	agg = agg_;
 }
 
@@ -78,7 +79,7 @@ void MosqClient::newMessageFromPAN(std::string msg) {
 	//uint8_t last = toIntFromString(s.substr(pos + delimiter.length()));
 	//vec.push_back(last);
 
-	if (agg.get())
+	if (agg)
 		agg->sendFromPAN(type, vec);
 }
 
@@ -156,7 +157,7 @@ bool MosqClient::add_topic_to_subscribe (std::string topic_) {
 
 void MosqClient::newMsgFromHAB(std::string msg_text) {
 
-	if(agg.get()){
+	if(agg){
 		agg->sendHABtoServer(msg_text);
 	}
 	else {
@@ -166,7 +167,7 @@ void MosqClient::newMsgFromHAB(std::string msg_text) {
 
 void MosqClient::askTheServer(string msg_text){
 	log.information("Mqtt ask the server for parameter " + msg_text);
-	if(agg.get()){
+	if(agg){
 		CmdParam param;
 		param.param_id = toIntFromString(msg_text);
 		param = agg->sendParam(param);

@@ -211,15 +211,12 @@ int main (int, char**) {
 
 		/* Mandatory module for sending and receiving data */
 		shared_ptr<Aggregator> agg (new Aggregator(msg, mosq));
-		agg->setAgg(agg);
-		agg_thread.start(*agg.get());
 
 		msg.state = "register";
 		msg.time = time(NULL);
 		/* Mandatory component for receiving asynchronous messages from server */
 		shared_ptr<IOTReceiver> receiver (new IOTReceiver(agg, IP_addr_out, port_out, msg, adapter_id));
 		receiver->keepaliveInit(cfg);
-		srv_thread.start(*receiver.get());
 		agg->setTCP(receiver);
 
 		// BeeeOn PAN coordinator module

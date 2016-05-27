@@ -89,6 +89,7 @@ Aggregator::Aggregator(IOTMessage _msg, shared_ptr<MosqClient> _mq) :
 	LEDControl::blinkLED(LED_PAN, 3);
 #endif
 
+	param = shared_ptr<Parameters> (new Parameters(*this, msg_default));
 }
 
 void Aggregator::sendToPANviaMQTT(std::vector<uint8_t> msg) {
@@ -124,7 +125,7 @@ void Aggregator::run() {
 
 		// Create distributor
 		if (cfg->getBool("distributor.enabled", false))
-			dist.reset(new Distributor(agg, mq));
+			dist.reset(new Distributor(*this, mq));
 	}
 	catch (Poco::Exception& ex) {
 		log.error("Exception with config file reading:\n" + ex.displayText());
@@ -133,8 +134,6 @@ void Aggregator::run() {
 
 	setLoggingLevel(log, cfg); /* Set logging level from configuration file*/
 	setLoggingChannel(log, cfg); /* Set where to log (console, file, etc.)*/
-
-	param = shared_ptr<Parameters> (new Parameters(agg, msg_default));
 
 	Poco::Thread distThread("Distributor thread");
 	if (dist)
@@ -227,7 +226,6 @@ void Aggregator::run() {
 	}
 
 	distThread.join();
-	agg.reset(); /* destroy self reference */
 }
 
 pair<bool, Command> Aggregator::sendData(IOTMessage _msg) {
@@ -259,10 +257,6 @@ pair<bool, Command> Aggregator::sendData(IOTMessage _msg) {
 		dist->addNewMessage(msg); // Secondary function to add message to the history
 
 	return retval;
-}
-
-void Aggregator::setAgg(shared_ptr<Aggregator> _agg) {
-	agg = _agg;
 }
 
 void Aggregator::setPAN(shared_ptr<PanInterface> _pan) {

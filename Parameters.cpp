@@ -14,7 +14,7 @@ using Poco::Util::IniFileConfiguration;
 using Poco::Net::NetworkInterface;
 using Poco::Net::IPAddress;
 
-Parameters::Parameters(shared_ptr<Aggregator> _agg, IOTMessage _msg) :
+Parameters::Parameters(Aggregator &_agg, IOTMessage _msg) :
 	log(Poco::Logger::get("Adaapp-Param")),
 	agg(_agg),
 	msg(_msg)
@@ -64,7 +64,7 @@ bool Parameters::cmdFromServer(Command cmd)
 		msg.params = filled_params;	// add parameters block (struct)
 		msg.state = "parameters";	// for answer is this state
 		msg.time = time(NULL);		// set actual time
-		agg->sendData(msg);			// send (response) to server
+		agg.sendData(msg);			// send (response) to server
 		return true;
 	}
 	else if (cmd.state == "parameters") { // response from the server or other information
@@ -102,7 +102,7 @@ CmdParam Parameters::askServer(CmdParam cmd_request)
 	msg.state = "getparameters";	// for request is this state
 	msg.time = time(NULL);			// set actual time
 	log.information("Ask the Server | state = getparameters | param_id = " + toStringFromInt(cmd_request.param_id));
-	pair<bool, Command> response = agg->sendData(msg);	// send to server
+	pair<bool, Command> response = agg.sendData(msg);	// send to server
 	if (response.first && response.second.state == "parameters"){
 		log.information("Ask the Server | return OK");
 		justPrintToLog(response.second.params);

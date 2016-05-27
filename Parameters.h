@@ -24,14 +24,14 @@
 
 class Parameters {
 public:
-	Parameters(std::shared_ptr<Aggregator> _agg, IOTMessage _msg);
+	Parameters(Aggregator &_agg, IOTMessage _msg);
 	bool cmdFromServer(Command cmd);
 	CmdParam askServer(CmdParam request);
 
 private:
 	std::string ada_type;
 	Poco::Logger& log;
-	std::shared_ptr<Aggregator> agg;
+	Aggregator& agg;
 	IOTMessage msg;
 	std::vector<std::pair<std::string, std::string> > euides;
 

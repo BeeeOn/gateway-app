@@ -143,7 +143,6 @@ private:
 	Poco::Logger& log;
 	std::unique_ptr<Distributor> dist;
 
-	std::shared_ptr<Aggregator> agg; /* needs to hold self reference */
 	std::shared_ptr<PressureSensor> psm;
 	std::shared_ptr<VirtualSensorModule> vsm;
 	std::shared_ptr<PanInterface> pan;
