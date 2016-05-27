@@ -78,12 +78,19 @@ Aggregator::Aggregator(IOTMessage _msg, shared_ptr<MosqClient> _mq) :
 	AutoPtr<IniFileConfiguration> cfg;
 	try {
 		cfg = new IniFileConfiguration(CONFIG_FILE);
+		cache_minimal_items = cfg->getInt("cache.minimal_items_cached", 10);
+		cache_minimal_time = cfg->getInt("cache.minimal_saving_time", 10);        // in minutes
+		permanent_cache_path = cfg->getString("cache.permanent_cache_path", "/tmp/permanent.cache");
+
+		// Create distributor
+		if (cfg->getBool("distributor.enabled", false))
+			dist.reset(new Distributor(*this, mq));
 	}
 	catch (Poco::Exception& ex) {
 		log.error("Exception with config file reading:\n" + ex.displayText());
 	}
 	setLoggingLevel(log, cfg); // Set logging level from config file
-	setLoggingChannel(log, cfg); // Set where to log ( console, file, etc.)
+	setLoggingChannel(log, cfg); // Set where to log (console, file, etc.)
 
 #ifdef LEDS_ENABLED
 	LEDControl::blinkLED(LED_PAN, 3);
@@ -115,25 +122,6 @@ void Aggregator::sendFromPAN(uint8_t type, std::vector<uint8_t> msg) {
 
 void Aggregator::run() {
 	log.information("Starting Aggregator thread...");
-
-	AutoPtr<IniFileConfiguration> cfg;
-	try {
-		cfg = new IniFileConfiguration(CONFIG_FILE);
-		cache_minimal_items = cfg->getInt("cache.minimal_items_cached", 10);
-		cache_minimal_time = cfg->getInt("cache.minimal_saving_time", 10);        // in minutes
-		permanent_cache_path = cfg->getString("cache.permanent_cache_path", "/tmp/permanent.cache");
-
-		// Create distributor
-		if (cfg->getBool("distributor.enabled", false))
-			dist.reset(new Distributor(*this, mq));
-	}
-	catch (Poco::Exception& ex) {
-		log.error("Exception with config file reading:\n" + ex.displayText());
-		//exit (EXIT_FAILURE);
-	}
-
-	setLoggingLevel(log, cfg); /* Set logging level from configuration file*/
-	setLoggingChannel(log, cfg); /* Set where to log (console, file, etc.)*/
 
 	Poco::Thread distThread("Distributor thread");
 	if (dist)
