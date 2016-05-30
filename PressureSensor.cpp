@@ -13,41 +13,21 @@
 
 using namespace std;
 using Poco::AutoPtr;
-using Poco::Logger;
-using Poco::Runnable;
-using Poco::Util::IniFileConfiguration;
 
 PressureSensor::PressureSensor(IOTMessage _msg, shared_ptr<Aggregator> _agg) :
-	wake_up_time(5),
-	msg(_msg),
-	agg(_agg),
-	log(Poco::Logger::get("Adaapp-PS"))
+	ModuleADT(_agg, "Adaapp-PS", MOD_PRESSURE_SENSOR, _msg),
+	wake_up_time(5)
 {
-	log.setLevel("trace"); // set default lowest level
-
-	AutoPtr<IniFileConfiguration> cfg;
-	try {
-		cfg = new IniFileConfiguration(std::string(MODULES_DIR)+std::string(MOD_PRESSURE_SENSOR)+".ini");
-	}
-	catch (Poco::Exception& ex) {
-		log.error("Exception with config file reading:\n" + ex.displayText());
-		exit (EXIT_FAILURE);
-	}
-
-	setLoggingLevel(log, cfg); /* Set logging level from configuration file*/
-	setLoggingChannel(log, cfg); /* Set where to log (console, file, etc.)*/
-
-	sensor.version = 1;
+	//sensor.version = 1;				// MC: implicitly set in module_ADT but keeping it here just for this comment.
 	sensor.euid = getEUI(msg.adapter_id);
 	sensor.pairs = 2;
 	sensor.device_id = 2;
 
-	msg.state = "data";
-	msg.priority = MSG_PRIO_SENSOR;
-	msg.offset = 0;
+	//msg.state = "data";				// MC: implicitly set in module_ADT
+	//msg.priority = MSG_PRIO_SENSOR;	// MC: implicitly set in module_ADT
+	//msg.offset = 0;					// MC: implicitly set in module_ADT
 
-	tt = fillDeviceTable();
-
+	//tt = fillDeviceTable();			// MC: implicitly set in module_ADT
 }
 
 /**
@@ -57,7 +37,7 @@ PressureSensor::PressureSensor(IOTMessage _msg, shared_ptr<Aggregator> _agg) :
  * Naturally end when quit_global_flag is set to true,
  * so the Adaapp is terminating.
  */
-void PressureSensor::run(){
+void PressureSensor::threadFunction(){
 
 	log.information("Starting Pressure sensor thread...");
 
@@ -150,11 +130,12 @@ bool PressureSensor::refreshValue() {
 }
 
 /**
- * Method for handling answer from server.
- * Can't contain anything, but "update" command.
+ * @brief Method for handling answer from server.
+ * Can't contain anything, but "update" or "set" command.
  * Only log error if anything else will come.
+ * @param cmd command struct with incomming command from server and delivered to PS
  */
-void PressureSensor::parseCmdFromServer(Command cmd){
+void PressureSensor::parseCmdFromServer(const Command& cmd){
 	if (cmd.state == "update") { // do nothing
 		return;
 	}
@@ -173,7 +154,7 @@ void PressureSensor::parseCmdFromServer(Command cmd){
 			} else
 				log.error("Set unknown module id, module id = "+ std::to_string(cmd.values[i].first));
 		}
-	return;
+		return;
 	}
 	log.error("Unexpected answer from server, received command: " + cmd.state);
 }
