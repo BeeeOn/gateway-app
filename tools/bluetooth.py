@@ -1,9 +1,10 @@
 #!/usr/bin/python2
-# Author BeeeOn team
-# Date: 2016-02-06
+# Author BeeeOn team (MS)
+# Date: May, 2016
 # Description: Script scans for available Bluetooth devices
 #		and from the desired sending their status to http daemon on OpenHAB.
 # Run:	bluetooth.py &
+#  or:	bluetooth.py --log
 
 import thread
 import time
@@ -15,12 +16,13 @@ import re
 import SocketServer
 
 devices_file = ".bluedevices"	# path to file with list of MAC bluetooth devices
-openhab_path = "/opt/openhab"	# path to OpenHAB (where is ./start.sh)
-openhab_port = 8080				# port http
+openhab_path = "/usr/share/openhab-runtime"	# path to OpenHAB (where is ./start.sh)
+openhab_version = "1.8.0"
+openhab_port = 8080             # port http
 mqtt_channel = "BeeeOn/openhab"	# name mosquitto channel
-sleep_scan = 9					# X seconds for bluetooth scan
+sleep_scan = 9		        # X seconds for bluetooth scan
 HOST, PORT = "localhost", 9871	# http handler and port
-log = False						# continuous list-ing to stdout
+log = False                     # continuous list-ing to stdout
 
 #=======================================================================
 thread_bool = True
@@ -30,6 +32,7 @@ class Knowledge(object):	# work with and memory MAC addresses
 	def __init__(self):
 		self.listMAC = []	# a list of MAC addresses
 		self.item = []		# mark in OH config
+		self.temps = []		# recent scan
 
 	def addMAC(self, mac):
 		if mac in self.listMAC:
@@ -68,6 +71,12 @@ class Knowledge(object):	# work with and memory MAC addresses
 		else:
 			return False
 
+	def addtemp(self, polo_mac):
+		self.temps.append(polo_mac)
+
+	def cleantemp(self):
+		self.temps = []
+
 	def writeOH(self):	# write changes to config files OpenHab
 		f_items = open(openhab_path+"/configurations/items/bluetooth.items", 'w')	# items
 		f_rules = open(openhab_path+"/configurations/rules/bluetooth.rules", 'w')	# rules
@@ -80,7 +89,7 @@ class Knowledge(object):	# work with and memory MAC addresses
 			index = str(idx)
 			f_items.write('\nSwitch BT'+index+' (All) {bluetooth="'+mac+'"}\n')
 			know.addItem(mac, ('BT'+ index) )
-			f_items.write('Switch MQTT'+index+' (All) {mqtt=">[broker:'+mqtt_channel+':command:on:euid;'+ mac +';device_id;5;module_id;0x00;value;1.00],>[broker:'+mqtt_channel+':command:off:euid;'+ mac +';device_id;5;module_id;0x00;value;2.00]"}\n')
+			f_items.write('Switch MQTT'+index+' (All) {mqtt=">[broker:'+mqtt_channel+':command:on:euid;'+ mac +';device_id;5;module_id;0x00;value;1.00],>[broker:'+mqtt_channel+':command:off:euid;'+ mac +';device_id;5;module_id;0x00;value;0.00]"}\n')
 
 			f_rules.write('\nrule "rule '+index+' for BT'+index+'"\nwhen\n')
 			f_rules.write('\tItem BT'+index+' received update\nthen\n')
@@ -108,41 +117,52 @@ class TCPHandler(SocketServer.BaseRequestHandler):
 		output = ''
 		self.request.sendall("200 OK\r\n")
 		if mesg == 'test':
-			if log: print('TCPHandler, just test')
+			if log: print(getT() + 'TCPHandler, just test')
 
 		if mesg == 'iwannalistofbluetooth':
-			if log: print('OH wants list of bluetooth - I do scanning...')
+			if log: print(getT() + 'OH wants list of bluetooth - I do scanning...')
 			while numOfTry < 8:		# number of experiments, when the scan fails (BT is busy)
 				try:
 					numOfTry += 1
 					output = subprocess.check_output(["hcitool", "scan"]) # do full scan
 				except:
-					time.sleep(1)
+					time.sleep(2)
 					continue
 
 			if output == '':
 				#self.request.sendall("400 FAIL\r\n")
 				return
 			output = output.split('\n')
+			if log: print(getT() + "Scan DONE")
 
+			know.cleantemp()	# remove old temp scan
 			for line in output:
 				if line.find(':') > 0:
 					lili = line.split()
 					if log: print(lili)
 					if len(lili) == 2 and not know.isstored(converse(lili[0])):
-						strforsend = 'euid;'+ converse(lili[0]) +';device_id;5;module_id;0x00;value;0.00;name;' + lili[1]
+						strforsend = 'euid;'+ converse(lili[0]) +';device_id;5;module_id;0x00;value;-1.00;name;' + lili[1]
 						if log: print(strforsend)
+						know.addtemp( (converse(lili[0])).lower() )
 						try: os.system('curl --max-time 2 --connect-timeout 2 --header "Content-Type: text/plain" --request PUT --data "'+strforsend+'" http://localhost:'+str(openhab_port)+'/rest/items/fromPy/state')
-						except: print(str(sys.argv[0]) + ": Failed sending2 to OpenHAB")
+						except: print(getT() + str(sys.argv[0]) + ": Failed sending2 to OpenHAB")
 
 		mesg = mesg.split(';')	# have to parse first !
 
 		if mesg[0] == 'adddevicetolist':		# example: adddevicetolist;00ABCDEF0123
-			if log: print('ADD DEVICE: ' + mesg[1])
-			know.addMAC(mesg[1])		# mesg[1] # there is a mac to add
+			if log: print(getT() + 'adddevicetolist : ' + mesg[1])
+			for itema in know.temps:
+				if itema.find(mesg[1]) > -1:
+					know.addMAC(itema)
+					if log: print(getT() + 'ADD DEVICE: ' + itema)
+
 		if mesg[0] == 'removedevicefromlist':
-			if log: print('REMOVE DEVICE: ' + mesg[1])
-			know.removeMAC(mesg[1])
+			if log: print(getT() + 'removedevicefromlist : ' + mesg[1])
+			for itemr in know.listMAC:
+				if itemr.lower().find(mesg[1]) > -1:
+					know.removeMAC(itemr)
+					if log: print(getT() + 'REMOVE DEVICE: ' + itemr)
+		mesg = []
 
 #=======================================================================
 def failBT():	# print error and The Bad End
@@ -150,6 +170,9 @@ def failBT():	# print error and The Bad End
 	thread_bool = False
 	sys.exit(1)
 
+#=======================================================================
+def getT():     # get TIME
+    return (strftime("%Y-%m-%d %H:%M:%S || ", gmtime()))
 #=======================================================================
 def converse(mac):	# addition or remove ":"
 	MAC = ''
@@ -190,7 +213,7 @@ def load_file():
 		text = 'Loaded:'
 		for mac in know.listMAC:
 			text += ' | ' + mac
-		print(text)
+		if log: print(getT() + text)
 
 #=======================================================================
 def http_handler():
@@ -207,15 +230,53 @@ def scanBT():		# scanning of individual devices
 			MAC = converse(mac)
 			(out, err) = Popen(["hcitool", "name", MAC], stdout=PIPE).communicate()
 			if len(out) <= 0:
-				if log: print (MAC+" NO name")
+				if log: print (getT() + MAC+" NO name")
 				state = 'OFF'
 			elif len(out) > 0:
-				if log: print (MAC+" HAS name: " + out)
+				if log: print (getT() + MAC+" HAS name: " + out)
 				state = 'ON'
 			try: os.system('curl --max-time 2 --connect-timeout 2 --header "Content-Type: text/plain" --request PUT --data "'+state+'" http://localhost:'+str(openhab_port)+'/rest/items/'+know.getItem(mac)+'/state')
-			except: print(str(sys.argv[0]) + ": Failed sending to OpenHAB")
+			except: print(getT() + str(sys.argv[0]) + ": Failed sending to OpenHAB")
 			time.sleep(1)
 	# while
+
+#=======================================================================
+def checkOHconf():
+	# check addons
+	ahttp = openhab_path+"/addons/org.openhab.binding.http-"+openhab_version+".jar"
+	if not os.path.isfile(ahttp):
+		try: os.system('cp '+openhab_path+'/../openhab-addons/org.openhab.binding.http-'+openhab_version+'.jar '+openhab_path+'/addons/')
+		except: sys.stderr.write(str(sys.argv[0]) + ": Missing openhab addons binding.http\n")
+	amqtt = openhab_path+"/addons/org.openhab.binding.mqtt-"+openhab_version+".jar"
+	if not os.path.isfile(amqtt):
+		try: os.system('cp '+openhab_path+'/../openhab-addons/org.openhab.binding.mqtt-'+openhab_version+'.jar '+openhab_path+'/addons/')
+		except: sys.stderr.write(str(sys.argv[0]) + ": Missing openhab addons binding.mqtt\n")
+	if log: print(getT() + "check addons OK")
+
+	# check main conf
+	if not os.path.isfile(openhab_path+"/configurations/openhab.cfg"):
+		with open(openhab_path+"/configurations/openhab.cfg", 'w') as f:	# create
+			f.write("##### Configuration for BeeeOn #####\n\
+			folder:items=5,items\n\
+			folder:sitemaps=10,sitemap\n\
+			folder:rules=5,rules\n\
+			folder:scripts=10,script\n\
+			folder:persistence=10,persist\n\
+			security:option=EXTERNAL\n\
+			persistence:default=rrd4j\n\
+			chart:provider=default\n\
+			logging:pattern=%date{ISO8601} - %-25logger: %msg%n\n\
+			mqtt:broker.url=tcp://localhost:1883\n\
+			ntp:hostname=ntp.nic.cz\n\
+			tcp:refreshinterval=250\n")
+	if log: print(getT() + "check main conf OK")
+
+	# check items & rules
+	if not os.path.isfile(openhab_path+"/configurations/items/bluetooth.items"):
+		know.writeOH()
+	elif not os.path.isfile(openhab_path+"/configurations/items/bluetooth.rules"):
+		know.writeOH()
+	if log: print(getT() + "check items & rules OK")
 
 #=======================================================================
 def main():
@@ -236,13 +297,15 @@ def main():
 
 	load_file()		# load stored MAC
 
+	checkOHconf()	# check OpenHab configuration
+
 	try:
 		#thread.start_new_thread( checking_file, () )	# check file with list of MAC
 		thread.start_new_thread( http_handler, () )	# run http handler
-		print(str(sys.argv[0]) + ": OK, run")
+		if log: print(getT() + str(sys.argv[0]) + ": OK, run")
 	except:
 		sys.stderr.write(str(sys.argv[0]) + ": Thread cannot start\n")
-		sys.exit(0)
+		sys.exit(2)
 
 	scanBT()
 
@@ -252,5 +315,5 @@ if __name__ == '__main__':
 		main()
 	except KeyboardInterrupt:
 		thread_bool = False
-		print('\n' + str(sys.argv[0]) + ': Shutdown')
+		if log: print('\n' + getT() + str(sys.argv[0]) + ': Shutdown')
 		sys.exit(0)

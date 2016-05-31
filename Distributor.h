@@ -40,12 +40,12 @@ class Distributor: public Poco::Runnable {
 		std::deque<IOTMessage> pending_msgs;                  // vector of unsent messages
 		std::unique_ptr<Poco::FastMutex> history_lock;          // Lock for inserting or reading values in history vector
 		std::unique_ptr<Poco::FastMutex> pending_lock;          // Lock for inserting or reading values in pending messages vector
-		std::shared_ptr<Aggregator> agg;                  // pointer to aggregator for calling "need more history data" messages
+		Aggregator &agg;                  // pointer to aggregator for calling "need more history data" messages
 		std::shared_ptr<MosqClient> mq;                   // pointer to Mosquitto client for MQTT communication
 		Poco::Logger& log;
 
 	public:
-		Distributor(std::shared_ptr<Aggregator> _agg, std::shared_ptr<MosqClient> _mq);
+		Distributor(Aggregator &_agg, std::shared_ptr<MosqClient> _mq);
 		virtual void run();
 		~Distributor();
 

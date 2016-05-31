@@ -30,7 +30,7 @@ private:
 	std::string host;
 	int port;
 	Poco::Logger& log;
-	std::shared_ptr<Aggregator> agg;
+	Aggregator* agg;
 
 public:
 	bool connected;
@@ -49,7 +49,7 @@ public:
 	MosqClient(std::string client_id_, std::string main_topic_, std::string msg_prefix, std::string host_ = "localhost", int port_=1883);
 	~MosqClient();
 
-	void setAgg(std::shared_ptr<Aggregator> agg_);
+	void setAgg(Aggregator* agg_);
 	void newMessageFromPAN(std::string msg);
 
 	/**
@@ -77,6 +77,8 @@ public:
 	bool add_topic_to_subscribe(std::string topic);
 
 	void newMsgFromHAB(std::string msg_text);
+
+	void askTheServer(std::string msg_text);
 };
 
 #endif	/* MYMOSQ_H */

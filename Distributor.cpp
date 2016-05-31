@@ -19,7 +19,7 @@ void Distributor::run() {
 	log.information("Distributor Thread running.");
 
 	if (mq.get() != nullptr){
-		mq->setAgg(agg);
+		mq->setAgg(&agg);
 	}
 
 	while(!quit_global_flag) {
@@ -54,7 +54,7 @@ void Distributor::run() {
 	}
 }
 
-Distributor::Distributor(shared_ptr<Aggregator> _agg, shared_ptr<MosqClient> _mq) :
+Distributor::Distributor(Aggregator &_agg, shared_ptr<MosqClient> _mq) :
 	geek_mode_enabled(false),
 	agg(_agg),
 	mq(_mq),

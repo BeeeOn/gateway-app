@@ -241,9 +241,14 @@ IOTReceiver::~IOTReceiver() {
 
 pair<bool, Command> IOTReceiver::sendToServer(IOTMessage _msg) {
 	Command income_cmd;
-	_msg.state = "data";
+	if (_msg.state == "")
+		_msg.state = "data";
 	unique_ptr<XMLTool> xml(new XMLTool(_msg));
-	string a_to_s = xml->createXML(A_TO_S);
+	string a_to_s = "";
+	if(_msg.state == "getparameters" || _msg.state == "parameters")
+		a_to_s = xml->createXML(PARAM);
+	else
+		a_to_s = xml->createXML(A_TO_S);
 
 	log.information("Try to send this MSG to server:\n" + a_to_s);
 
@@ -254,6 +259,7 @@ pair<bool, Command> IOTReceiver::sendToServer(IOTMessage _msg) {
 	try {
 		SecureStreamSocket str(sa);
 		str.sendBytes(a_to_s.c_str(), a_to_s.length());
+		str.setReceiveTimeout(Poco::Timespan(RECEIVE_TIMEOUT,0));
 
 		char buffer[BUF_SIZE];
 		string message = "";

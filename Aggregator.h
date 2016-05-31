@@ -30,6 +30,7 @@ extern bool quit_global_flag;
 #include "Distributor.h"
 #include "MosqClient.h"
 #include "Openhab.h"
+#include "Parameters.h"
 #include "PressureSensor.h"
 #include "utils.h"
 #include "VirtualSensorModule.h"
@@ -78,6 +79,7 @@ class PanInterface;
 class VirtualSensorModule;
 class Distributor;
 class IOTReceiver;
+class Parameters;
 
 /**
  * Class to watch invalid time. If there is no valid time, messages are not sent to the server and offset to blackout is computed. Correct time is computed after restoration of time.
@@ -109,7 +111,7 @@ public:
  */
 class Aggregator: public Poco::Runnable {
 public:
-	Aggregator(long long int _adapter_id, std::shared_ptr<MosqClient> _mq);
+	Aggregator(IOTMessage _msg, std::shared_ptr<MosqClient> _mq);
 	void run();
 	std::pair<bool, Command> sendData(IOTMessage _msg);
 	virtual ~Aggregator();
@@ -118,6 +120,7 @@ public:
 	void setPSM(std::shared_ptr<PressureSensor> _psm);
 	void setPAN(std::shared_ptr<PanInterface> _pan);
 	void setVPT(std::shared_ptr<VPTSensor> _vpt);
+	void setHAB(std::shared_ptr<OpenHAB> _hab);
 	void setTCP(std::shared_ptr<IOTReceiver> _tcp);
 	void storeCache();
 	void loadCache(void);
@@ -130,8 +133,9 @@ public:
 	float convertValue(TT_Module type, float old_val, bool reverse=false);
 
 	void setAgg(std::shared_ptr<Aggregator> _agg);
-	void setIOTmsg(IOTMessage msg);
 	void sendHABtoServer(std::string msg_text);
+	void sendToMQTT(std::string msg_text, std::string topic);
+	CmdParam sendParam(CmdParam param);
 
 private:
 	std::unique_ptr<Poco::FastMutex> cache_lock;
@@ -139,12 +143,13 @@ private:
 	Poco::Logger& log;
 	std::unique_ptr<Distributor> dist;
 
-	std::shared_ptr<Aggregator> agg; /* needs to hold self reference */
 	std::shared_ptr<PressureSensor> psm;
 	std::shared_ptr<VirtualSensorModule> vsm;
 	std::shared_ptr<PanInterface> pan;
 	std::shared_ptr<VPTSensor> vpt;
+	std::shared_ptr<OpenHAB> hab;
 	std::shared_ptr<IOTReceiver> tcp;
+	std::shared_ptr<Parameters> param;
 
 	std::thread button_t;
 
@@ -153,14 +158,11 @@ private:
 	long long int cache_last_storing_time;
 	std::string permanent_cache_path;
 
-	long long int adapter_id;
+	IOTMessage msg_default;
 	TimeWatchdog watchdog;
 	std::shared_ptr<MosqClient> mq;
 
 	void printCache(bool verbose);
-
-	IOTMessage iotmsg;
-	std::unique_ptr<OpenHAB> hab;
 
 };
 

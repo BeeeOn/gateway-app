@@ -55,6 +55,7 @@ int main (int, char**) {
 	bool mod_pressure_sensor = false;
 	bool mod_mqtt = false;
 	bool mod_vpt = false;
+	bool mod_openhab = false;
 
 	AutoPtr<IniFileConfiguration> cfg;
 	AutoPtr<IniFileConfiguration> cfg_pan;
@@ -62,11 +63,13 @@ int main (int, char**) {
 	AutoPtr<IniFileConfiguration> cfg_pressure_sensor;
 	AutoPtr<IniFileConfiguration> cfg_vpt;
 	AutoPtr<IniFileConfiguration> cfg_mqtt;
+	AutoPtr<IniFileConfiguration> cfg_hab;
 
 	Poco::Thread agg_thread("Aggregator");
 	Poco::Thread vsm_thread("VSM");
 	Poco::Thread srv_thread("TCP");
 	Poco::Thread vpt_thread("VPT");
+	Poco::Thread hab_thread("HAB");
 
 	Logger& log = Poco::Logger::get("Adaapp-MAIN"); // get logging utility
 	log.setLevel("trace"); // set default lowest level
@@ -111,6 +114,12 @@ int main (int, char**) {
 	}
 	catch (...) { }
 
+	try { // OpenHAB
+		cfg_hab = new IniFileConfiguration(string(MODULES_DIR)+string(MOD_OPENHAB)+".ini");
+		mod_openhab = cfg_hab->getBool(string(MOD_OPENHAB)+".enabled", false);
+	}
+	catch (...) { }
+
 	try {
 		cfg_mqtt = new IniFileConfiguration(string(MODULES_DIR)+string(MOD_MQTT)+".ini");
 		mod_mqtt = cfg_mqtt->getBool(string(MOD_MQTT)+".enabled", false);
@@ -146,6 +155,7 @@ int main (int, char**) {
 	log.information(MOD_VIRTUAL_SENSOR  + ":  " + ((mod_virtual_sensor) ? " ON" : "OFF"));
 	log.information(MOD_MQTT            + ":            " + ((mod_mqtt) ? " ON" : "OFF"));
 	log.information(MOD_VPT_SENSOR      + ":      " +        ((mod_vpt) ? " ON" : "OFF"));
+	log.information(MOD_OPENHAB         + ":         " + ((mod_openhab) ? " ON" : "OFF"));
 
 	srand(time(0));
 
@@ -180,6 +190,7 @@ int main (int, char**) {
 		shared_ptr<MosqClient> mosq;
 		shared_ptr<PanInterface> pan;
 		shared_ptr<VPTSensor> vptsensor;
+		shared_ptr<OpenHAB> hab;
 		shared_ptr<PressureSensor> psm;
 		shared_ptr<VirtualSensorModule> vsm;
 
@@ -198,46 +209,68 @@ int main (int, char**) {
 		}
 
 		/* Mandatory module for sending and receiving data */
-		shared_ptr<Aggregator> agg (new Aggregator(adapter_id, mosq));
-		agg->setAgg(agg);
-		agg->setIOTmsg(msg);
-		agg_thread.start(*agg.get());
+		shared_ptr<Aggregator> agg (new Aggregator(msg, mosq));
 
 		msg.state = "register";
 		msg.time = time(NULL);
 		/* Mandatory component for receiving asynchronous messages from server */
 		shared_ptr<IOTReceiver> receiver (new IOTReceiver(agg, IP_addr_out, port_out, msg, adapter_id));
 		receiver->keepaliveInit(cfg);
-		srv_thread.start(*receiver.get());
 		agg->setTCP(receiver);
 
 		// BeeeOn PAN coordinator module
 		if (mod_pan) {
-			log.information("Starting PAN module.");
+			log.information("Creating PAN module.");
 			pan.reset(new PanInterface(msg, agg));
 			pan->set_pan(pan); // XXX Function name should be same
 			agg->setPAN(pan);
 		}
 
 		if (mod_vpt) {
-			log.information("Starting VPT module.");
+			log.information("Creating VPT module.");
 			vptsensor.reset(new VPTSensor(msg, agg, adapter_id));
-			vpt_thread.start(*vptsensor.get());
 			agg->setVPT(vptsensor);
 		}
 
+		if (mod_openhab && mod_mqtt) {
+			log.information("Creating OpenHAB module.");
+			hab.reset(new OpenHAB(msg, agg));
+			agg->setHAB(hab);
+		}
+
 		if (mod_pressure_sensor) {
-			log.information("Starting PressureSensors module.");
+			log.information("Creating PressureSensors module.");
 			psm.reset(new PressureSensor(msg, agg));
-			psm.get()->start();
 			agg->setPSM(psm);
 		}
 
 		if (mod_virtual_sensor) {
-			log.information("Starting VirtualSensors module.");
+			log.information("Creating VirtualSensors module.");
 			vsm.reset(new VirtualSensorModule(msg, agg));
-			vsm_thread.start(*vsm.get());
 			agg->setVSM(vsm);
+		}
+
+		agg_thread.start(*agg.get());
+		srv_thread.start(*receiver.get());
+
+		if (mod_vpt) {
+			log.information("Starting VPT module.");
+			vpt_thread.start(*vptsensor.get());
+		}
+
+		if (mod_openhab && mod_mqtt) {
+			log.information("Starting OpenHAB module.");
+			hab_thread.start(*hab.get());
+		}
+
+		if (mod_pressure_sensor) {
+			log.information("Starting PressureSensors module.");
+			psm.get()->start();
+		}
+
+		if (mod_virtual_sensor) {
+			log.information("Starting VirtualSensors module.");
+			vsm_thread.start(*vsm.get());
 		}
 
 		/* "Endless" loop waiting for SIGINT/SIGTERM */
@@ -260,6 +293,11 @@ int main (int, char**) {
 		if (mod_vpt) {
 			log.information("Stopping VPT Sensor module...");
 			vpt_thread.join();
+		}
+
+		if (mod_openhab && mod_mqtt) {
+			log.information("Stopping OpenHAB module...");
+			hab_thread.join();
 		}
 
 		if (mod_mqtt) {

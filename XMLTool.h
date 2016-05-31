@@ -41,6 +41,7 @@ public:
 private:
 	IOTMessage msg;
 	void createDevice(Poco::XML::XMLWriter*, Device, bool debug=false, std::string proto="", std::string fw="");
+	void createParam(Poco::XML::XMLWriter* w, CmdParam dev, std::string state);
 	Poco::Logger& log;
 };
 

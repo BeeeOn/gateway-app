@@ -77,6 +77,7 @@
 #define MOD_TCP         	(std::string)"tcp"
 #define MOD_XML         	(std::string)"xmltool"
 #define MOD_JSON         	(std::string)"json"
+#define MOD_PARAM			(std::string)"parameters"
 
 #define DEFAULT_LOG_FORMAT	(std::string)"[%Y-%m-%d %H:%M:%S, %q%q, %s, %T] %t"
 
@@ -88,6 +89,7 @@
 
 #define A_TO_S 0
 #define INIT   1
+#define PARAM  2
 
 #define DELAY_TIME 10000        // microseconds -- main.cpp
 #define LOCK_DELAY_TIME 5000   // microseconds -- main.cpp
@@ -141,7 +143,8 @@ enum BUTTON_EVENT {
 enum MSG_PRIO {
 	MSG_PRIO_HISTORY = 0,   // Messages from cache memory (low-priority)
 	MSG_PRIO_SENSOR  = 1,   // On-line messages which come from sensor (normal-priority)
-	MSG_PRIO_ACTUATOR= 2,   // Sensor-actuator messages (high-priority)
+	MSG_PRIO_PARAM   = 2,   // Parameter messages (normal-priority)
+	MSG_PRIO_ACTUATOR= 3,   // Sensor-actuator messages (high-priority)
 	MSG_PRIO_REG     = 6    // Regisration message (highest priority)
 };
 
@@ -455,6 +458,22 @@ inline Poco::Logger& getErrLogger () {
 	return logger;
 }
 
+/**
+ * Struct for parameters messages.
+ */
+struct CmdParam {
+	int param_id;			// id of requirement
+	euid_t euid;			// optional
+	bool status;			// true = all is ok; false = something is wrong (server or format message)
+	std::vector<std::pair<std::string, std::string> > value;	// array of strings
+			// pair (firts = value, second = attribute (optional))
+	CmdParam() :
+		param_id(0),
+		euid(0),
+		status(false)
+	{ };
+};
+
 struct Value {
 	int mid;		// module_id
 	float value;	// value (float)
@@ -491,12 +510,14 @@ struct Device {
 	euid_t euid;
 	long int device_id;	// ID to device table
 	int pairs;		// Number of pairs
+	std::string name;	// Own name of device
 	std::vector<Value> values;
 	Device():
 		version(0),
 		euid(0),
 		device_id(0),
-		pairs(0)
+		pairs(0),
+		name("")
 	{ }
 
 	void print() {
@@ -504,6 +525,7 @@ struct Device {
 		std::cout << "EUID     :" << euid << std::endl;
 		std::cout << "device_id:" << device_id << std::endl;
 		std::cout << "pairs    :" << pairs << std::endl;
+		std::cout << "name     :" << name << std::endl;
 		for (Value i : values) {
 			std::cout << "  module_id:" << i.mid << ", value:" << i.value << std::endl;
 		}
@@ -522,6 +544,7 @@ struct IOTMessage {
 	long long int offset;   // Offset to compute timstamp (used if there is a non vaid time)
 	bool valid;             // Flag to mark non valid time in the message
 	long long int tt_version;// Version of table types, used in registration messages
+	CmdParam params;		// Struct with parameters
 
 	IOTMessage() :
 		protocol_version("0"),
@@ -556,6 +579,7 @@ struct Command {
 	long long int device_id;        // device_id typu zarizeni
 	long long int time;             // when should the sensor wake up
 	std::vector<std::pair<int, float> > values;
+	CmdParam params;
 
 	Command() :
 		protocol_version(FW_VERSION),

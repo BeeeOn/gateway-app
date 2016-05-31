@@ -25,6 +25,7 @@
 #include "Aggregator.h"
 #include "IOcontrol.h"
 #include "MosqClient.h"
+#include "Openhab.h"
 #include "PanInterface.h"
 #include "TCP.h"
 #include "VirtualSensor.h"

@@ -22,6 +22,7 @@ MosqClient::MosqClient(std::string client_id_, std::string main_topic_, std::str
 	host(host_),
 	port(port_),
 	log(Poco::Logger::get("Adaapp-MQTT")),
+	agg(nullptr),
 	connected(false)
 {
 	log.setLevel("trace"); // set default lowest level
@@ -52,7 +53,7 @@ bool MosqClient::send_message(std::string message, std::string topic_, int qos) 
 	return ((publish(NULL, topic_.c_str(), message.length(), message.c_str(), qos)) == MOSQ_ERR_SUCCESS );
 }
 
-void MosqClient::setAgg(shared_ptr<Aggregator> agg_) {
+void MosqClient::setAgg(Aggregator* agg_) {
 	agg = agg_;
 }
 
@@ -78,7 +79,7 @@ void MosqClient::newMessageFromPAN(std::string msg) {
 	//uint8_t last = toIntFromString(s.substr(pos + delimiter.length()));
 	//vec.push_back(last);
 
-	if (agg.get())
+	if (agg)
 		agg->sendFromPAN(type, vec);
 }
 
@@ -139,6 +140,9 @@ void MosqClient::on_message (const struct mosquitto_message *message) {
 	if (msg_topic.compare("BeeeOn/openhab") == 0) {
 		newMsgFromHAB(msg_text);
 	}
+	if (msg_topic.compare("BeeeOn/param") == 0) {
+		askTheServer(msg_text);
+	}
 }
 
 void MosqClient::on_subscribe (int mid, int qos_count, const int *granted_qos) {
@@ -153,13 +157,29 @@ bool MosqClient::add_topic_to_subscribe (std::string topic_) {
 
 void MosqClient::newMsgFromHAB(std::string msg_text) {
 
-	//std::unique_ptr<OpenHAB> hab(new OpenHAB(iotmsg, agg));
-	//hab->msgFromMqtt(msg);
-	// "The object is automatically deleted when the scope ends."
-
-	if(agg.get()){
+	if(agg){
 		agg->sendHABtoServer(msg_text);
+	}
+	else {
+		log.information("newMsgFromHAB | Missing agg");
+	}
+}
+
+void MosqClient::askTheServer(string msg_text){
+	log.information("Mqtt ask the server for parameter " + msg_text);
+	if(agg){
+		CmdParam param;
+		param.param_id = toIntFromString(msg_text);
+		param = agg->sendParam(param);
+		if (! param.status)
+			return;
+		if (param.value.size()){
+			for(auto item: param.value){
+				log.information("Server answer: " + item.first);
+			}
+			log.information("Server answers done.");
+		} else log.information("No values from server");
 	} else {
-		log.information("Missing agg");
+		log.error("askTheServer | Missing agg");
 	}
 }
