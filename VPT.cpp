@@ -74,7 +74,7 @@ static string generateBeeeonTimestamp(const string &adapter_id,
 		const string &action)
 {
 	Poco::DateTime time;
-	return "BeeeOn " + ip_address + "/" + adapter_id + ":" +
+	return ip_address + "/" + adapter_id + ":" +
 		Poco::DateTimeFormatter::format(time, "%d.%m.%Y+") +
 		getTimeZone() +
 		Poco::DateTimeFormatter::format(time, " %H:%M:%S") + action;
