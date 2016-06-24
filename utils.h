@@ -87,6 +87,8 @@
 #define MOSQ_TOPIC_ERROR  MOSQ_TOPICS_PREFIX + (std::string)"failure"
 #define MOSQ_TOPIC_CMD    MOSQ_TOPICS_PREFIX + (std::string)"commands"
 
+#define PROTOCOL_VERSION (std::string)"1.1"
+
 #define A_TO_S 0
 #define INIT   1
 #define PARAM  2
@@ -547,7 +549,7 @@ struct IOTMessage {
 	CmdParam params;		// Struct with parameters
 
 	IOTMessage() :
-		protocol_version("0"),
+		protocol_version(PROTOCOL_VERSION),
 		state(""),
 		adapter_id("0"),
 		fw_version("0"),
