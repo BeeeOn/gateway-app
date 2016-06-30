@@ -163,7 +163,6 @@ int main (int, char**) {
 	IOTMessage msg;
 	msg.adapter_id = toStringFromLongHex(adapter_id);
 	msg.fw_version = FW_VERSION;
-	msg.protocol_version = cfg->getString("versions.protocol", "0.1");
 	msg.debug = false;
 	msg.priority = MSG_PRIO_SENSOR;
 	msg.valid = true;
