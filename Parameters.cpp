@@ -14,19 +14,16 @@ using Poco::Util::IniFileConfiguration;
 using Poco::Net::NetworkInterface;
 using Poco::Net::IPAddress;
 
-Parameters::Parameters(Aggregator &_agg, IOTMessage _msg) :
-	log(Poco::Logger::get("Adaapp-Param")),
+Parameters::Parameters(Aggregator &_agg, IOTMessage _msg, Logger &_log):
+	log(_log),
 	agg(_agg),
 	msg(_msg)
 {
-	log.setLevel("trace"); // set default lowest level
 	ada_type = "other";
 
 	AutoPtr<IniFileConfiguration> cfg_param;
 	try {
 		cfg_param = new IniFileConfiguration(string(MODULES_DIR)+string(MOD_PARAM)+".ini");
-		setLoggingLevel(log, cfg_param); // Set logging level from config file
-		setLoggingChannel(log, cfg_param); // Set where to log ( console, file, etc.)
 		ada_type = cfg_param->getString(string(MOD_PARAM) + ".type", "other");
 	}
 	catch (Poco::Exception& ex) {

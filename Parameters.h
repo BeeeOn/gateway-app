@@ -24,7 +24,7 @@
 
 class Parameters {
 public:
-	Parameters(Aggregator &_agg, IOTMessage _msg);
+	Parameters(Aggregator &_agg, IOTMessage _msg, Poco::Logger &_log);
 	bool cmdFromServer(Command cmd);
 	CmdParam askServer(CmdParam request);
 
