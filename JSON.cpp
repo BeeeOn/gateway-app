@@ -6,8 +6,6 @@
  */
 
 
-#include "JSON.h"
-
 #include <algorithm>
 #include <array>
 #include <fstream>
@@ -16,6 +14,8 @@
 #include <Poco/Dynamic/Var.h>
 #include <Poco/JSON/JSON.h>
 #include <Poco/JSON/Parser.h>
+
+#include "JSON.h"
 
 using namespace std;
 using Poco::AutoPtr;
@@ -40,15 +40,16 @@ void JSONDevices::loadDeviceConfiguration(string device_name, string page_versio
 	json_device device_struct;
 	device_struct.id = jsonStruct["device_id"].extract<int>();
 	vector<string> functions = loadFunctions(jsonStruct);
-	if (std::find(functions.begin(), functions.end(), "sensors") != functions.end()) {
+
+	if (std::find(functions.begin(), functions.end(), "sensors") != functions.end())
 		loadSensorsConfiguration(jsonStruct, &device_struct);
-	}
-	if (std::find(functions.begin(), functions.end(), "actuators") != functions.end()) {
+
+	if (std::find(functions.begin(), functions.end(), "actuators") != functions.end())
 		loadActuatorsConfiguration(jsonStruct, &device_struct);
-	}
-	if (std::find(functions.begin(), functions.end(), "converter") != functions.end()) {
+
+	if (std::find(functions.begin(), functions.end(), "converter") != functions.end())
 		loadConverterConfiguration(jsonStruct, &device_struct);
-	}
+
 	devices.insert({device_name, device_struct});
 	log.information("JSON: Successfully loaded device specification for " + device_name);
 }
@@ -71,13 +72,15 @@ bool JSONDevices::isJSONFormat(std::string content) {
 std::string JSONDevices::generateRequestURL(string device_name, int id, float value) {
 	string request_url = "";
 	std::map<std::string,json_device>::iterator it = devices.find(device_name);
-	if (it == devices.end()) {
+
+	if (it == devices.end())
 		return request_url;
-	}
+
 	std::map<int, actuator_values>::iterator actuator_it = it->second.actuators.find(id);
-	if (actuator_it == it->second.actuators.end()) {
+
+	if (actuator_it == it->second.actuators.end())
 		return request_url;
-	}
+
 	request_url = "/" + *(actuator_it->second.url) + "?" + actuator_it->second.variable + "=";
 	if (actuator_it->second.action == NULL) {
 		std::ostringstream ss;
@@ -90,6 +93,7 @@ std::string JSONDevices::generateRequestURL(string device_name, int id, float va
 			request_url += convertEnumToValue(device_name, actuator_it->second.name, value_enum);
 		}
 	}
+
 	return request_url;
 }
 
@@ -140,10 +144,12 @@ vector<Value> JSONDevices::getSensors(std::string content, std::string device_na
 				}
 			}
 			log.debug("JSON:\tID: " + to_string(get<1>(sensor)) + ", Value: " + to_string((int) number));
+
 			if (number ==  numeric_limits<float>::infinity())
 				values.push_back({get<1>(sensor), number, false});
 			else
 				values.push_back({get<1>(sensor), number});
+
 		}
 	}
 	return values;
@@ -153,9 +159,10 @@ vector<Value> JSONDevices::getSensors(std::string content, std::string device_na
 string JSONDevices::convertEnumToValue(string device_name, string value_name, int value) {
 	shared_ptr<converter_option> options = devices.find(device_name)->second.converter.find(value_name)->second;
 	for (unsigned index = 0; index < options->options_id.size(); index++) {
-		if (options->options_id.at(index) == value) {
+
+		if (options->options_id.at(index) == value)
 			return options->options_name.at(index);
-		}
+
 	}
 	throw Poco::Exception("JSON: Can't find convert value " + value_name + " for device " + device_name);
 }
@@ -163,9 +170,10 @@ string JSONDevices::convertEnumToValue(string device_name, string value_name, in
 int JSONDevices::convertValueToEnum(string device_name, string value_name, string value) {
 	shared_ptr<converter_option> options = devices.find(device_name)->second.converter.find(value_name)->second;
 	for (unsigned index = 0; index < options->options_name.size(); index++) {
-		if (options->options_name.at(index).compare(value) == 0) {
+
+		if (options->options_name.at(index).compare(value) == 0)
 			return options->options_id.at(index);
-		}
+
 	}
 	throw Poco::Exception("JSON: Can't find convert value " + value_name + " for device " + device_name);
 }
@@ -173,9 +181,10 @@ int JSONDevices::convertValueToEnum(string device_name, string value_name, strin
 void JSONDevices::checkBaseFormat(Poco::DynamicStruct & jsonStruct) {
 	vector<string> base_parameters = {"vendor", "device", "functions"};
 	for (vector<string>::iterator it = base_parameters.begin(); it != base_parameters.end(); it++) {
-		if (!jsonStruct.contains(*it)) {
+
+		if (!jsonStruct.contains(*it))
 			throw Poco::Exception("JSON: Invalid json format missing \"" + *it + "\"\n");
-		}
+
 	}
 	checkFunctionExist(jsonStruct);
 }
@@ -201,9 +210,10 @@ Poco::DynamicStruct JSONDevices::loadFile(string file_path) {
 	Poco::JSON::Parser parser;
 	Poco::DynamicStruct jsonStruct;
 	json_file.open(file_path, std::ios::in);
-	if (!json_file.is_open()) {
+
+	if (!json_file.is_open())
 		throw Poco::Exception("JSON: Can't open file for device \"" + file_path + "\"\n");
-	}
+
 	istream is(&json_file);
 	jsonStruct = *(parser.parse(is).extract<Poco::JSON::Object::Ptr>());
 	json_file.close();
@@ -225,9 +235,10 @@ void JSONDevices::loadActuatorsConfiguration(Poco::DynamicStruct & jsonStruct, j
 			else {
 				actuator.action = it->second;
 			}
-			if (actuator.action->compare("convert") == 0) {
+
+			if (actuator.action->compare("convert") == 0)
 				actuator.name = jsonStruct["actuators"][index]["name"].toString();
-			}
+
 		}
 		else {
 			actuator.action = NULL;
@@ -251,9 +262,10 @@ void JSONDevices::loadConverterConfiguration(Poco::DynamicStruct & jsonStruct, j
 			options->options_name.push_back(jsonStruct["converter"][index]["options"][begin][0].toString());
 			options->options_id.push_back(jsonStruct["converter"][index]["options"][begin][1].extract<int>());
 		}
-		for (int begin = 0, end = jsonStruct["converter"][index]["support"].size(); begin < end; begin++) {
+
+		for (int begin = 0, end = jsonStruct["converter"][index]["support"].size(); begin < end; begin++)
 			device_struct->converter.insert({jsonStruct["converter"][index]["support"][begin].toString(),options});
-		}
+
 	}
 }
 
@@ -284,17 +296,19 @@ void JSONDevices::loadSensorsConfiguration(Poco::DynamicStruct & jsonStruct, jso
 
 vector<string> JSONDevices::loadFunctions(Poco::DynamicStruct & jsonStruct) {
 	vector<string> functions;
-	for (int index = 0, count = jsonStruct["functions"].size(); index < count; index++) {
+
+	for (int index = 0, count = jsonStruct["functions"].size(); index < count; index++)
 		functions.push_back(jsonStruct["functions"][index].toString());
-	}
+
 	return functions;
 }
 
 vector<string> JSONDevices::loadSensorsGroups(Poco::DynamicStruct & jsonStruct) {
 	vector<string> groups;
-	for (int count = jsonStruct["sensors"]["groups"].size(), index = 0; index < count; index++) {
+
+	for (int count = jsonStruct["sensors"]["groups"].size(), index = 0; index < count; index++)
 		groups.push_back(jsonStruct["sensors"]["groups"][index].toString());
-	}
+
 	if (groups.empty()) {
 		throw Poco::Exception("JSON: Invalid json format for vendor \"" + jsonStruct["vendor"].toString() +
 							  "\" and device \"" + jsonStruct["device"].toString() + "\"\n");
