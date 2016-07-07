@@ -13,6 +13,9 @@
 #include <fstream>
 #include <streambuf>
 
+#include <Poco/Dynamic/Var.h>
+#include <Poco/JSON/JSON.h>
+#include <Poco/JSON/Parser.h>
 
 using namespace std;
 using Poco::AutoPtr;
@@ -52,7 +55,7 @@ void JSONDevices::loadDeviceConfiguration(string device_name, string page_versio
 
 bool JSONDevices::isJSONFormat(std::string content) {
 	bool state;
-	parser.reset();
+	Poco::JSON::Parser parser;
 
 	try {
 		parser.parse(content);
@@ -62,7 +65,6 @@ bool JSONDevices::isJSONFormat(std::string content) {
 		state = false;
 	}
 
-	parser.reset();
 	return state;
 }
 
@@ -96,7 +98,7 @@ int JSONDevices::getID(std::string device_name) {
 }
 
 string JSONDevices::getParameterValuesFromContent(std::string parameter, std::string content) {
-	parser.reset();
+	Poco::JSON::Parser parser;
 	Poco::DynamicStruct jsonStruct = *(parser.parse(content).extract<Poco::JSON::Object::Ptr>());
 	return jsonStruct[parameter].toString();
 }
@@ -105,8 +107,8 @@ vector<Value> JSONDevices::getSensors(std::string content, std::string device_na
 	vector<Value> values;
 	map<string, json_device>::iterator device_itr;
 	json_device * device_info;
+	Poco::JSON::Parser parser;
 
-	parser.reset();
 	log.debug("JSON: Get sensors values");
 	Poco::DynamicStruct jsonStruct = *(parser.parse(content).extract<Poco::JSON::Object::Ptr>());
 
@@ -196,7 +198,7 @@ void JSONDevices::checkFunctionExist(Poco::DynamicStruct & jsonStruct) {
 
 Poco::DynamicStruct JSONDevices::loadFile(string file_path) {
 	filebuf json_file;
-	parser.reset();
+	Poco::JSON::Parser parser;
 	Poco::DynamicStruct jsonStruct;
 	json_file.open(file_path, std::ios::in);
 	if (!json_file.is_open()) {

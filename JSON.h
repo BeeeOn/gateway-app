@@ -17,12 +17,9 @@
 #include <vector>
 
 #include <Poco/AutoPtr.h>
+#include <Poco/Dynamic/Struct.h>
 #include <Poco/Exception.h>
 #include <Poco/Logger.h>
-
-#include <Poco/Dynamic/Var.h>
-#include <Poco/JSON/JSON.h>
-#include <Poco/JSON/Parser.h>
 
 #include "utils.h"
 
@@ -85,7 +82,6 @@ private:
 	Poco::AutoPtr<Poco::Util::IniFileConfiguration> cfg; /**< Config file with additional options.
 																Primary use: mapping names of devices to file with description device */
 	Poco::Logger& log;
-	Poco::JSON::Parser parser;
 
 
 	std::string convertEnumToValue(std::string device_name, std::string value_name, int value);
