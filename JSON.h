@@ -64,7 +64,7 @@ struct json_device {
  */
 class JSONDevices {
 public:
-	JSONDevices();
+	JSONDevices(Poco::Logger &_log = Poco::Logger::get("Adaapp-VPT"));
 
 	void loadDeviceConfiguration(std::string, std::string page_version);
 

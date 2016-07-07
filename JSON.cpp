@@ -22,7 +22,7 @@ using Poco::AutoPtr;
 using Poco::Logger;
 
 
-JSONDevices::JSONDevices(void) : log(Poco::Logger::get("Adaapp-VPT"))
+JSONDevices::JSONDevices(Poco::Logger &_log) : log(_log)
 {
 	devices_folder = MODULES_DIR + "json_devices/";
 	cfg = new Poco::Util::IniFileConfiguration(std::string(MODULES_DIR)+std::string(MOD_JSON)+".ini");
