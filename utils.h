@@ -93,6 +93,8 @@
 #define INIT   1
 #define PARAM  2
 
+#define HEX_NUMBER 16
+
 #define DELAY_TIME 10000        // microseconds -- main.cpp
 #define LOCK_DELAY_TIME 5000   // microseconds -- main.cpp
 #define DIST_THREAD_SLEEP 100000
@@ -474,6 +476,15 @@ struct CmdParam {
 		euid(0),
 		status(false)
 	{ };
+
+	inline std::vector<euid_t> getEuides()
+	{
+		std::vector<euid_t> euides;
+		for (auto const& it: value) {
+			euides.push_back(std::stoull(std::get<0>(it), nullptr, HEX_NUMBER));
+		}
+		return euides;
+	}
 };
 
 struct Value {
