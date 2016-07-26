@@ -12,10 +12,7 @@ ModuleADT::ModuleADT(std::shared_ptr<Aggregator> agg_, std::string logger_name, 
 	log(Poco::Logger::get(logger_name)),
 	msg(msg_)
 {
-	using Poco::AutoPtr;
 	using Poco::Util::IniFileConfiguration;
-
-	AutoPtr<IniFileConfiguration> cfg;
 
 	try {
 		cfg = new IniFileConfiguration(std::string(MODULES_DIR)+std::string(MODULE)+".ini");
