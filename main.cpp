@@ -43,6 +43,7 @@ int main (int, char**) {
 	bool mod_pan = false;
 	bool mod_virtual_sensor = false;
 	bool mod_pressure_sensor = false;
+	bool mod_leds_module = false;
 	bool mod_mqtt = false;
 	bool mod_vpt = false;
 	bool mod_jablotron = false;
@@ -61,6 +62,7 @@ int main (int, char**) {
 	AutoPtr<IniFileConfiguration> cfg_mqtt_data_module;
 	AutoPtr<IniFileConfiguration> cfg_bluetooth;
 	AutoPtr<IniFileConfiguration> cfg_belkin_wemo;
+	AutoPtr<IniFileConfiguration> cfg_leds;
 
 	Poco::Thread agg_thread("Aggregator");
 	Poco::Thread mqtt_thread("MosquittoClient");
@@ -111,6 +113,12 @@ int main (int, char**) {
 	try {
 		cfg_pressure_sensor = new IniFileConfiguration(string(MODULES_DIR)+string(MOD_PRESSURE_SENSOR)+".ini");
 		mod_pressure_sensor = cfg_pressure_sensor->getBool(string(MOD_PRESSURE_SENSOR)+".enabled", false);
+	}
+	catch (...) { }
+
+	try {
+		cfg_leds = new IniFileConfiguration(MODULES_DIR+MOD_LED_MODULE+".ini");
+		mod_leds_module = cfg_leds->getBool(MOD_LED_MODULE+".enabled", false);
 	}
 	catch (...) { }
 
@@ -177,6 +185,7 @@ int main (int, char**) {
 	log.information("Starting Adapter (ID: " + toStringFromLongHex(adapter_id) + ", FW_VERSION: " + FW_VERSION + ") with these modules:");
 	log.information(MOD_PAN             + ":             " + ((mod_pan) ? " ON" : "OFF"));
 	log.information(MOD_PRESSURE_SENSOR + ": " + ((mod_pressure_sensor) ? " ON" : "OFF"));
+	log.information(MOD_LED_MODULE      + ": " + ((mod_leds_module) ? " ON" : "OFF"));
 	log.information(MOD_VIRTUAL_SENSOR  + ":  " + ((mod_virtual_sensor) ? " ON" : "OFF"));
 	log.information(MOD_MQTT            + ":            " + ((mod_mqtt) ? " ON" : "OFF"));
 	log.information(MOD_VPT_SENSOR      + ":      " +        ((mod_vpt) ? " ON" : "OFF"));
@@ -218,6 +227,7 @@ int main (int, char**) {
 		shared_ptr<PanInterface> pan;
 		shared_ptr<VPTSensor> vptsensor;
 		shared_ptr<PressureSensor> psm;
+		shared_ptr<LedModule> leds;
 		shared_ptr<VirtualSensorModule> vsm;
 		shared_ptr<JablotronModule> jablotron;
 		shared_ptr<MQTTDataModule> mqtt_data_module;
@@ -278,6 +288,12 @@ int main (int, char**) {
 			agg->setPSM(psm);
 		}
 
+		if (mod_leds_module) {
+			log.information("Creating Leds Module.");
+			leds.reset(new LedModule(msg, agg));
+			agg->setLedModule(leds);
+		}
+
 		if (mod_virtual_sensor) {
 			log.information("Creating VirtualSensors module.");
 			vsm.reset(new VirtualSensorModule(msg, agg));
@@ -319,6 +335,11 @@ int main (int, char**) {
 		if (mod_pressure_sensor) {
 			log.information("Starting PressureSensors module.");
 			psm.get()->start();
+		}
+
+		if (mod_leds_module) {
+			log.information("Starting Leds module.");
+			leds->start();
 		}
 
 		if (mod_virtual_sensor) {
