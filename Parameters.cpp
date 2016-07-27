@@ -14,19 +14,16 @@ using Poco::Util::IniFileConfiguration;
 using Poco::Net::NetworkInterface;
 using Poco::Net::IPAddress;
 
-Parameters::Parameters(Aggregator &_agg, IOTMessage _msg) :
-	log(Poco::Logger::get("Adaapp-Param")),
+Parameters::Parameters(Aggregator &_agg, IOTMessage _msg, Logger &_log):
+	log(_log),
 	agg(_agg),
 	msg(_msg)
 {
-	log.setLevel("trace"); // set default lowest level
 	ada_type = "other";
 
 	AutoPtr<IniFileConfiguration> cfg_param;
 	try {
 		cfg_param = new IniFileConfiguration(string(MODULES_DIR)+string(MOD_PARAM)+".ini");
-		setLoggingLevel(log, cfg_param); // Set logging level from config file
-		setLoggingChannel(log, cfg_param); // Set where to log ( console, file, etc.)
 		ada_type = cfg_param->getString(string(MOD_PARAM) + ".type", "other");
 	}
 	catch (Poco::Exception& ex) {
@@ -56,9 +53,15 @@ bool Parameters::cmdFromServer(Command cmd)
 		log.information("cmdFromServer | state == getparameters");
 		CmdParam filled_params;		// (will be) filled struct for send
 		switch (cmd.params.param_id) {
-			case 2000: filled_params = getDummy(cmd.params); break;
-			case 2001: filled_params = getLocalIp(cmd.params); break;
-			case 2002: filled_params = getGatetype(cmd.params); break;
+			case SRV_PING:
+				filled_params = getDummy(cmd.params);
+				break;
+			case SRV_GET_GW_IP_LIST:
+				filled_params = getLocalIp(cmd.params);
+				break;
+			case SRV_GET_GW_TYPE:
+				filled_params = getGatetype(cmd.params);
+				break;
 			default: return false;
 		}
 		msg.params = filled_params;	// add parameters block (struct)
@@ -70,11 +73,17 @@ bool Parameters::cmdFromServer(Command cmd)
 	else if (cmd.state == "parameters") { // response from the server or other information
 		log.information("cmdFromServer | state == parameters");
 		switch (cmd.params.param_id) {
-			case 1000: log.information("Server PING me"); break;
-			case 1001: /*label*/ justPrintToLog(cmd.params); break;
-			case 1002: /*room*/ justPrintToLog(cmd.params); break;
-			case 1003: allsensors(cmd.params); break;
-			case 1004: /*vptpasswd*/ justPrintToLog(cmd.params); break;
+			case GW_PING:
+				log.information("Server PING me");
+				break;
+			case GW_GET_DEV_NAME: /*label*/
+			case GW_GET_DEV_ROOM: /*room*/
+			case GW_GET_DEV_CREDENTIALS: /*vptpasswd*/
+				justPrintToLog(cmd.params);
+				break;
+			case GW_GET_ALL_DEVS:
+				allsensors(cmd.params);
+				break;
 			default: return false;
 		}
 	}
@@ -88,7 +97,7 @@ bool Parameters::cmdFromServer(Command cmd)
  */
 CmdParam Parameters::askServer(CmdParam cmd_request)
 {
-	if (cmd_request.param_id < 1000 || cmd_request.param_id > 1999){
+	if (cmd_request.param_id < GW_PING || cmd_request.param_id > GW_END){
 		log.error("Ask the Server: Wrong param_id");
 		cmd_request.status = false;
 		return cmd_request;	// id of requirement must be specified

@@ -96,7 +96,7 @@ Aggregator::Aggregator(IOTMessage _msg, shared_ptr<MosqClient> _mq) :
 	LEDControl::blinkLED(LED_PAN, 3);
 #endif
 
-	param = shared_ptr<Parameters> (new Parameters(*this, msg_default));
+	param = shared_ptr<Parameters> (new Parameters(*this, msg_default, log));
 }
 
 void Aggregator::sendToPANviaMQTT(std::vector<uint8_t> msg) {
