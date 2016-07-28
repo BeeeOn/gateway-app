@@ -147,6 +147,9 @@ VPTSensor::VPTSensor(IOTMessage _msg, shared_ptr<Aggregator> _agg, long long int
 
 void VPTSensor::fetchAndSendMessage(map<euid_t, VPTDevice>::iterator &device)
 {
+	if (device->second.paired && !device->second.active)
+		return;
+
 	try {
 		pair<bool, Command> response;
 		if (createMsg(device->second)) {
@@ -251,6 +254,8 @@ void VPTSensor::detectDevices(void) {
 	euid_t id;
 	vector<string> devices = http_client->discoverDevices();
 	VPTDevice device;
+	device.active = VPTDevice::ACTIVE;
+
 	for (vector<string>::iterator it = devices.begin(); it != devices.end(); it++) {
 		try {
 			string content = http_client->sendRequest(*it);

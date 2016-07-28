@@ -42,10 +42,18 @@ typedef struct VPTDevice {
 	Device sensor;
 	unsigned int wake_up_time;
 	unsigned int time_left;
+	int active;
 	bool paired;
+
+	// Enum for time interval
+	enum {
+		INACTIVE = 0,
+		ACTIVE = 1,
+	};
 
 	VPTDevice()
 	{
+		active = INACTIVE;
 		paired = false;
 	}
 } VPTDevice;
