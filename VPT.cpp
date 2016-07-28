@@ -27,8 +27,7 @@ using Poco::Util::IniFileConfiguration;
 
 
 #define VPT_DEFAULT_WAKEUP_TIME 15 /* seconds */
-#define VPT_ID_PREFIX 0xa4000000
-#define VPT_ID_MASK   0x00ffffff
+#define VPT_EUID_PREFIX 0xa4000000
 #define SEND_RETRY 3
 
 #define HEX_NUMBER 16
@@ -243,7 +242,7 @@ euid_t VPTSensor::parseDeviceId(string &content)
 {
 	string id = json->getParameterValuesFromContent("id", content);
 	euid_t euid = stoull(id.substr(SUB_MAC_START, SUB_MAC_LENGTH), nullptr, HEX_NUMBER);
-	return VPT_ID_PREFIX | (euid & VPT_ID_MASK);
+	return VPT_EUID_PREFIX | (euid & EUID_MASK);
 }
 
 void VPTSensor::detectDevices(void) {

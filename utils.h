@@ -154,6 +154,9 @@ enum MSG_PRIO {
 
 typedef uint64_t euid_t;
 
+#define EUID_MASK 0x00FFFFFF
+#define EUID_PREFIX_MASK 0xFF000000
+
 inline long long int toNumFromString(std::string num) {
 	try {
 		return(Poco::NumberParser::parseHex64(num));
