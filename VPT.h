@@ -42,6 +42,12 @@ typedef struct VPTDevice {
 	Device sensor;
 	unsigned int wake_up_time;
 	unsigned int time_left;
+	bool paired;
+
+	VPTDevice()
+	{
+		paired = false;
+	}
 } VPTDevice;
 
 class Aggregator;

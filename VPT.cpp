@@ -254,6 +254,12 @@ void VPTSensor::detectDevices(void) {
 		try {
 			string content = http_client->sendRequest(*it);
 			id = parseDeviceId(content);
+
+			if (map_devices.find(id) != map_devices.end())
+				device.paired = map_devices[id].paired;
+			else
+				device.paired = false;
+
 			device.name = json->getParameterValuesFromContent("device", content);
 			device.page_version = json->getParameterValuesFromContent("version", content);
 			device.specification = device.name +"_"+ device.page_version;
@@ -265,7 +271,7 @@ void VPTSensor::detectDevices(void) {
 			device.wake_up_time = VPT_DEFAULT_WAKEUP_TIME;
 			device.time_left = VPT_DEFAULT_WAKEUP_TIME;
 			log.information("VPT: Detected device " + device.name + " with ip " + device.ip + " and version of web page " + device.page_version);
-			map_devices.insert({id, device});
+			map_devices[id] = device;
 		}
 		catch (...) {/* exceptions are cought in the caller */}
 	}
