@@ -27,6 +27,7 @@ public:
 	Parameters(Aggregator &_agg, IOTMessage _msg, Poco::Logger &_log);
 	bool cmdFromServer(Command cmd);
 	CmdParam askServer(CmdParam request);
+	CmdParam getAllPairedDevices();
 	enum {
 		GW_PING = 1000,
 		GW_GET_DEV_NAME,
