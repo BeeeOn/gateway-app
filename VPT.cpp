@@ -14,6 +14,7 @@
 
 #include "main.h"
 #include "VPT.h"
+#include "Parameters.h"
 
 using namespace std;
 using Poco::AutoPtr;
@@ -191,8 +192,8 @@ unsigned int VPTSensor::nextWakeup(void)
  */
 void VPTSensor::run(){
 	unsigned int next_wakeup = 0;
-	detectDevices();
-	pairDevices();
+
+	initPairedDevices();
 
 	for (auto device = map_devices.begin(); device != map_devices.end(); device++)
 		fetchAndSendMessage(device);
@@ -280,6 +281,35 @@ void VPTSensor::detectDevices(void) {
 
 bool VPTSensor::isVPTSensor(euid_t euid) {
 	return map_devices.find(euid) != map_devices.end();
+}
+
+void VPTSensor::initPairedDevices()
+{
+	Parameters parameter(*(agg.get()), msg, log);
+	CmdParam result = parameter.getAllPairedDevices();
+	VPTDevice device;
+
+	if (!result.status)
+		return;
+
+	device.paired = true;
+	device.wake_up_time = VPT_DEFAULT_WAKEUP_TIME;
+	device.time_left = VPT_DEFAULT_WAKEUP_TIME;
+
+	try {
+		for (auto const& euid: result.getEuides(VPT_EUID_PREFIX)) {
+			map_devices[euid] = device;
+			log.information("Paired VPT with device euid: " + to_string(euid));
+		}
+	}
+	catch (Poco::Exception& exc) {
+		log.error("Initialization paired device failed with error: " + exc.displayText());
+	}
+
+	if (!map_devices.empty()) {
+		detectDevices();
+		pairDevices();
+	}
 }
 
 void VPTSensor::updateDeviceWakeUp(euid_t euid, unsigned int time)

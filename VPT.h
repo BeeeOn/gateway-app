@@ -78,6 +78,7 @@ private:
 	void convertPressure(std::vector<Value> &values);
 	unsigned int nextWakeup(void);
 	void fetchAndSendMessage(std::map<euid_t, VPTDevice>::iterator &device);
+	void initPairedDevices();
 	void pairDevices();
 	euid_t parseDeviceId(std::string &content);
 	void updateDeviceWakeUp(euid_t euid, unsigned int time);
