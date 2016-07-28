@@ -22,6 +22,7 @@
 
 #include <Poco/AutoPtr.h>
 #include <Poco/Logger.h>
+#include <Poco/Mutex.h>
 #include <Poco/Net/IPAddress.h>
 #include <Poco/Runnable.h>
 #include <Poco/Util/IniFileConfiguration.h>
@@ -77,6 +78,7 @@ private:
 	std::unique_ptr<HTTPClient> http_client;
 	std::unique_ptr<JSONDevices> json;
 	Poco::Logger& log;
+	Poco::Mutex devs_lock;
 	IOTMessage msg;
 	std::map<euid_t, VPTDevice> map_devices;
 	std::string password;

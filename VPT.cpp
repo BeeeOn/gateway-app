@@ -17,6 +17,7 @@
 #include "Parameters.h"
 
 using namespace std;
+using namespace Poco;
 using Poco::AutoPtr;
 using Poco::DigestEngine;
 using Poco::DigestOutputStream;
@@ -177,6 +178,7 @@ unsigned int VPTSensor::nextWakeup(void)
 {
 	unsigned int min_time = ~0;
 
+	ScopedLock<Poco::Mutex> guard(devs_lock);
 	for (auto it = map_devices.begin(); it != map_devices.end(); it++) {
 		VPTDevice &device = it->second;
 
@@ -202,12 +204,16 @@ void VPTSensor::run(){
 
 	initPairedDevices();
 
+	devs_lock.lock();
 	for (auto device = map_devices.begin(); device != map_devices.end(); device++)
 		fetchAndSendMessage(device);
+	devs_lock.unlock();
 
 	vector<map<euid_t, VPTDevice>::iterator> delete_devices;
 	while(!quit_global_flag) {
 		delete_devices.clear();
+
+		devs_lock.lock();
 		for (auto it = map_devices.begin(); it != map_devices.end(); it++) {
 			VPTDevice &device = it->second;
 
@@ -225,6 +231,7 @@ void VPTSensor::run(){
 			assert(next_wakeup <= device.time_left);
 			device.time_left -= next_wakeup;
 		}
+		devs_lock.unlock();
 
 		deleteDevices(delete_devices);
 		next_wakeup = nextWakeup();
@@ -269,6 +276,7 @@ void VPTSensor::detectDevices(void) {
 	VPTDevice device;
 	device.active = VPTDevice::FIVE_MINUTES;
 
+	ScopedLock<Mutex> guard(devs_lock);
 	for (vector<string>::iterator it = devices.begin(); it != devices.end(); it++) {
 		try {
 			string content = http_client->sendRequest(*it);
@@ -315,6 +323,7 @@ void VPTSensor::initPairedDevices()
 	device.time_left = VPT_DEFAULT_WAKEUP_TIME;
 
 	try {
+		ScopedLock<Mutex> guard(devs_lock);
 		for (auto const& euid: result.getEuides(VPT_EUID_PREFIX)) {
 			map_devices[euid] = device;
 			log.information("Paired VPT with device euid: " + to_string(euid));
@@ -480,6 +489,7 @@ void VPTSensor::convertPressure(vector<Value> &values) {
 void VPTSensor::pairDevices(void) {
 	vector<map<euid_t, VPTDevice>::iterator> devices_del;
 
+	ScopedLockWithUnlock<Mutex> guard(devs_lock);
 	for(auto device = map_devices.begin(); device != map_devices.end(); device++) {
 		try {
 			json->loadDeviceConfiguration(device->second.name, device->second.page_version);
@@ -493,12 +503,14 @@ void VPTSensor::pairDevices(void) {
 			log.error("VPT: " + e.displayText());
 		}
 	}
+	guard.unlock();
 
 	deleteDevices(devices_del);
 }
 
 void VPTSensor::deleteDevices(vector<euid_t> euides)
 {
+	ScopedLock<Mutex> guard(devs_lock);
 	for (auto euid: euides) {
 		log.debug("Delete VPT with euid: " + to_string(euid));
 		map_devices.erase(euid);
@@ -507,6 +519,7 @@ void VPTSensor::deleteDevices(vector<euid_t> euides)
 
 void VPTSensor::deleteDevices(vector<map<euid_t, VPTDevice>::iterator> iterators)
 {
+	ScopedLock<Mutex> guard(devs_lock);
 	for (const auto it: iterators) {
 		log.debug("Delete VPT with euid: " + to_string(it->first));
 		map_devices.erase(it);
