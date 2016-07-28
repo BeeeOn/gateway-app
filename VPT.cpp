@@ -478,6 +478,21 @@ void VPTSensor::pairDevices(void) {
 		}
 	}
 
-	for(auto it = devices_del.begin(); it != devices_del.end(); it++)
-		map_devices.erase(*it);
+	deleteDevices(devices_del);
+}
+
+void VPTSensor::deleteDevices(vector<euid_t> euides)
+{
+	for (auto euid: euides) {
+		log.debug("Delete VPT with euid: " + to_string(euid));
+		map_devices.erase(euid);
+	}
+}
+
+void VPTSensor::deleteDevices(vector<map<euid_t, VPTDevice>::iterator> iterators)
+{
+	for (const auto it: iterators) {
+		log.debug("Delete VPT with euid: " + to_string(it->first));
+		map_devices.erase(it);
+	}
 }
