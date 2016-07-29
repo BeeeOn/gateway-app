@@ -11,6 +11,7 @@
 #include <Poco/DigestStream.h>
 #include <Poco/RegularExpression.h>
 #include <Poco/SHA1Engine.h>
+#include <Poco/Thread.h>
 
 #include "main.h"
 #include "VPT.h"
@@ -24,6 +25,7 @@ using Poco::DigestOutputStream;
 using Poco::Logger;
 using Poco::RegularExpression;
 using Poco::Runnable;
+using Poco::TimerCallback;
 using Poco::SHA1Engine;
 using Poco::Util::IniFileConfiguration;
 
@@ -146,6 +148,9 @@ VPTSensor::VPTSensor(IOTMessage _msg, shared_ptr<Aggregator> _agg, long long int
 	tt = fillDeviceTable();
 	json.reset(new JSONDevices);
 	http_client.reset(new HTTPClient(cfg->getUInt("port", 80)));
+
+	listen_cmd_timer.setPeriodicInterval(0);
+	listen_cmd_timer.setStartInterval(0);
 }
 
 void VPTSensor::fetchAndSendMessage(map<euid_t, VPTDevice>::iterator &device)
@@ -441,6 +446,11 @@ void VPTSensor::processCmdListen(void)
 	try {
 		detectDevices();
 		pairDevices();
+
+		listen_cmd_timer.stop();
+		listen_cmd_timer.setStartInterval(VPTDevice::THREE_MINUTES);
+		listen_cmd_timer.start(TimerCallback<VPTSensor>(*this,
+					&VPTSensor::checkPairedDevices));
 	}
 	catch (Poco::Exception & exc) {
 		log.error("VPT: " + exc.displayText());
@@ -489,6 +499,61 @@ void VPTSensor::convertPressure(vector<Value> &values) {
 			break;
 		}
 	}
+}
+
+void VPTSensor::checkPairedDevices(Timer& timer)
+{
+	bool find_devices_on_network = false;
+	VPTDevice device;
+	Parameters parameter(*(agg.get()), msg, log);
+	CmdParam result = parameter.getAllPairedDevices();
+
+	if (!result.status)
+		return;
+
+	setAllDevicesNotPaired();
+
+	log.debug("Checking paired devices");
+
+	device.paired = true;
+	device.wake_up_time = VPT_DEFAULT_WAKEUP_TIME;
+	device.time_left = VPT_DEFAULT_WAKEUP_TIME;
+
+	try {
+		ScopedLock<Mutex> guard(devs_lock);
+
+		for (auto const& euid: result.getEuides(VPT_EUID_PREFIX)) {
+			map<euid_t, VPTDevice>::iterator it = map_devices.find(euid);
+			if (it != map_devices.end()) {
+				log.information("Device with euid " + to_string(euid)
+						+ " set as paired");
+				it->second.paired = true;
+
+				if (it->second.active <= VPTDevice::INACTIVE)
+					find_devices_on_network = true;
+
+			}
+			else {
+				log.information("Device with euid " + to_string(euid)
+						+ " was not detected on LAN in last 2 minutes");
+				find_devices_on_network = true;
+				map_devices[euid] = device;
+			}
+		}
+	}
+	catch (Poco::Exception& exc) {
+		log.error("Checking paired devices failed with error: " + exc.displayText());
+	}
+
+	if (find_devices_on_network) {
+		log.information("Trying detect paired devices, which can be detect in last "
+				+ to_string((timer.getStartInterval() / 1000) / 60) + " minutes");
+		detectDevices(ONLY_PAIRED);
+		pairDevices();
+	}
+
+	log.debug("Checking paired devices is ending");
+	timer.setStartInterval(0);
 }
 
 void VPTSensor::pairDevices(void) {

@@ -25,6 +25,7 @@
 #include <Poco/Mutex.h>
 #include <Poco/Net/IPAddress.h>
 #include <Poco/Runnable.h>
+#include <Poco/Timer.h>
 #include <Poco/Util/IniFileConfiguration.h>
 
 #include "device_table.h"
@@ -50,6 +51,7 @@ typedef struct VPTDevice {
 	enum {
 		INACTIVE = 0,
 		ACTIVE = 1,
+		THREE_MINUTES = 3 * 60 * 1000, //3 min in milliseconds
 		FIVE_MINUTES = 5 * 60, // 5 min in seconds
 	};
 
@@ -83,6 +85,11 @@ private:
 	std::unique_ptr<JSONDevices> json;
 	Poco::Logger& log;
 	Poco::Mutex devs_lock;
+	/*
+	 * other threads must always call timer.stop() prior to setting this
+	 * interval to avoid races.
+	 */
+	Poco::Timer listen_cmd_timer;
 	IOTMessage msg;
 	std::map<euid_t, VPTDevice> map_devices;
 	std::string password;
@@ -91,6 +98,7 @@ private:
 	bool createMsg(VPTDevice &device);
 	std::string buildPasswordHash(std::string content);
 	void convertPressure(std::vector<Value> &values);
+	void checkPairedDevices(Poco::Timer& timer);
 	void deleteDevices(std::vector<euid_t> euides);
 	void deleteDevices(std::vector<std::map<euid_t, VPTDevice>::iterator> iterators);
 	unsigned int nextWakeup(void);
