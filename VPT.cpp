@@ -486,7 +486,10 @@ void VPTSensor::pairDevices(void) {
 			updateTimestampOnVPT(device->second, ACTION_PAIR);
 		}
 		catch (Poco::Exception &e) {
-			devices_del.push_back(device);
+
+			if (!device->second.paired)
+				devices_del.push_back(device);
+
 			log.error("VPT: " + e.displayText());
 		}
 	}
