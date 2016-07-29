@@ -151,6 +151,9 @@ VPTSensor::VPTSensor(IOTMessage _msg, shared_ptr<Aggregator> _agg, long long int
 
 	listen_cmd_timer.setPeriodicInterval(0);
 	listen_cmd_timer.setStartInterval(0);
+
+	detect_devs_timer.setPeriodicInterval(0);
+	detect_devs_timer.setStartInterval(0);
 }
 
 void VPTSensor::fetchAndSendMessage(map<euid_t, VPTDevice>::iterator &device)
@@ -230,6 +233,16 @@ void VPTSensor::run(){
 				if (!device.paired && device.active <= VPTDevice::INACTIVE) {
 					delete_devices.push_back(it);
 					continue;
+				}
+
+				if (device.paired
+					&& device.active <= VPTDevice::INACTIVE
+					&& detect_devs_timer.getStartInterval() == 0)
+				{
+					detect_devs_timer.stop();
+					detect_devs_timer.setStartInterval(VPTDevice::FIFTEEN_MINUTES);
+					detect_devs_timer.start(TimerCallback<VPTSensor>(*this,
+							&VPTSensor::checkPairedDevices));
 				}
 
 				device.time_left = device.wake_up_time;

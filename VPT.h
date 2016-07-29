@@ -53,6 +53,7 @@ typedef struct VPTDevice {
 		ACTIVE = 1,
 		THREE_MINUTES = 3 * 60 * 1000, //3 min in milliseconds
 		FIVE_MINUTES = 5 * 60, // 5 min in seconds
+		FIFTEEN_MINUTES = 15 * 60 * 1000, //15 min in milliseconds
 	};
 
 	VPTDevice()
@@ -90,6 +91,7 @@ private:
 	 * interval to avoid races.
 	 */
 	Poco::Timer listen_cmd_timer;
+	Poco::Timer detect_devs_timer;
 	IOTMessage msg;
 	std::map<euid_t, VPTDevice> map_devices;
 	std::string password;
