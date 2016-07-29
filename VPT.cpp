@@ -49,6 +49,8 @@ const unsigned PRESSURE_MODULE_ID = 62;
 
 const unsigned CONVERT_VALUE = 1000;
 
+const bool ONLY_PAIRED = true;
+
 static float convertBarToHectopascals(float bar) {
 	return bar * CONVERT_VALUE;
 }
@@ -269,7 +271,7 @@ euid_t VPTSensor::parseDeviceId(string &content)
 	return VPT_EUID_PREFIX | (euid & EUID_MASK);
 }
 
-void VPTSensor::detectDevices(void) {
+void VPTSensor::detectDevices(bool only_paired) {
 	log.notice("VPT: Start device discovery");
 	euid_t id;
 	vector<string> devices = http_client->discoverDevices();
@@ -286,6 +288,9 @@ void VPTSensor::detectDevices(void) {
 				device.paired = map_devices[id].paired;
 			else
 				device.paired = false;
+
+			if (only_paired && !device.paired)
+				continue;
 
 			device.name = json->getParameterValuesFromContent("device", content);
 			device.page_version = json->getParameterValuesFromContent("version", content);
@@ -334,7 +339,7 @@ void VPTSensor::initPairedDevices()
 	}
 
 	if (!map_devices.empty()) {
-		detectDevices();
+		detectDevices(ONLY_PAIRED);
 		pairDevices();
 	}
 }

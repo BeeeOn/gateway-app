@@ -68,7 +68,11 @@ public:
 
 	virtual void run();
 
-	void detectDevices();
+	/**
+	 * Detect devices on LAN. If only_paired is true, only known already paired
+	 * devices are detected and the other devices are ignored.
+	 */
+	void detectDevices(bool only_paired = false);
 	bool isVPTSensor(euid_t sensor_id);
 	void parseCmdFromServer(Command cmd);
 
