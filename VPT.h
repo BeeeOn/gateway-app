@@ -51,6 +51,7 @@ typedef struct VPTDevice {
 	enum {
 		INACTIVE = 0,
 		ACTIVE = 1,
+		DEFAULT_WAKEUP_TIME = 15, // 15 seconds
 		THREE_MINUTES = 3 * 60 * 1000, //3 min in milliseconds
 		FIVE_MINUTES = 5 * 60, // 5 min in seconds
 		FIFTEEN_MINUTES = 15 * 60 * 1000, //15 min in milliseconds
@@ -60,6 +61,8 @@ typedef struct VPTDevice {
 	{
 		active = INACTIVE;
 		paired = false;
+		wake_up_time = DEFAULT_WAKEUP_TIME;
+		time_left = DEFAULT_WAKEUP_TIME;
 	}
 } VPTDevice;
 

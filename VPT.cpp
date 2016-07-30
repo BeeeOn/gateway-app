@@ -30,7 +30,6 @@ using Poco::SHA1Engine;
 using Poco::Util::IniFileConfiguration;
 
 
-#define VPT_DEFAULT_WAKEUP_TIME 15 /* seconds */
 #define VPT_EUID_PREFIX 0xa4000000
 #define SEND_RETRY 3
 
@@ -204,7 +203,7 @@ unsigned int VPTSensor::nextWakeup(void)
 	}
 
 	if (map_devices.empty())
-		min_time = VPT_DEFAULT_WAKEUP_TIME;
+		min_time = VPTDevice::DEFAULT_WAKEUP_TIME;
 
 	return min_time;
 }
@@ -325,8 +324,6 @@ void VPTSensor::detectDevices(bool only_paired) {
 			device.sensor.euid = id;
 			device.sensor.pairs = 0;
 			device.sensor.values.clear();
-			device.wake_up_time = VPT_DEFAULT_WAKEUP_TIME;
-			device.time_left = VPT_DEFAULT_WAKEUP_TIME;
 			log.information("VPT: Detected device " + device.name + " with ip " + device.ip + " and version of web page " + device.page_version);
 			map_devices[id] = device;
 		}
@@ -349,8 +346,6 @@ void VPTSensor::initPairedDevices()
 		return;
 
 	device.paired = true;
-	device.wake_up_time = VPT_DEFAULT_WAKEUP_TIME;
-	device.time_left = VPT_DEFAULT_WAKEUP_TIME;
 
 	try {
 		ScopedLock<Mutex> guard(devs_lock);
@@ -379,8 +374,8 @@ void VPTSensor::updateDeviceWakeUp(euid_t euid, unsigned int time)
 
 	VPTDevice &dev = it->second;
 
-	if (time < VPT_DEFAULT_WAKEUP_TIME)
-		time = VPT_DEFAULT_WAKEUP_TIME;
+	if (time < VPTDevice::DEFAULT_WAKEUP_TIME)
+		time = VPTDevice::DEFAULT_WAKEUP_TIME;
 
 	dev.wake_up_time = time;
 	dev.time_left = dev.wake_up_time;
@@ -536,8 +531,6 @@ void VPTSensor::checkPairedDevices(Timer& timer)
 	log.debug("Checking paired devices");
 
 	device.paired = true;
-	device.wake_up_time = VPT_DEFAULT_WAKEUP_TIME;
-	device.time_left = VPT_DEFAULT_WAKEUP_TIME;
 
 	try {
 		ScopedLock<Mutex> guard(devs_lock);
