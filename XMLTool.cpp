@@ -212,7 +212,10 @@ Command XMLTool::parseXML(string str) {
 						}
 						attributes->release();
 					}
-					cmd.params.value.push_back({inner, device_id});
+
+					if (!inner.empty() || !device_id.empty())
+						cmd.params.value.push_back({inner, device_id});
+
 				}
 				else {
 					float val = atof(pNode->innerText().c_str());
