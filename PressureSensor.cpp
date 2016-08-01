@@ -10,9 +10,13 @@
 
 #include "main.h"
 #include "PressureSensor.h"
+#include "Parameters.h"
 
 using namespace std;
 using Poco::AutoPtr;
+
+#define REFRESH_MODULE_ID 0x01
+#define SECONDS_IN_DAY 86400
 
 PressureSensor::PressureSensor(IOTMessage _msg, shared_ptr<Aggregator> _agg) :
 	ModuleADT(_agg, "Adaapp-PS", MOD_PRESSURE_SENSOR, _msg),
@@ -40,6 +44,7 @@ PressureSensor::PressureSensor(IOTMessage _msg, shared_ptr<Aggregator> _agg) :
 void PressureSensor::threadFunction(){
 
 	log.information("Starting Pressure sensor thread...");
+	obtainRefreshTime();
 
 	while(!quit_global_flag) {
 		pair<bool, Command> response;
@@ -142,19 +147,53 @@ void PressureSensor::parseCmdFromServer(const Command& cmd){
 	if (cmd.state == "set"){
 		for( unsigned int i =0; i < cmd.values.size(); i++){
 			if (cmd.values[i].first == 1) { //Change refresh time
-				int new_wakeup = (int) cmd.values[i].second;
-				if ((new_wakeup < 1) || (new_wakeup > 86400)){ // less than 1 second or more than 24 hours
-					log.error("Incorrect wakeup time set: "+ std::to_string(new_wakeup)+" seconds!");
-				}
-				else{
-					log.information("Changed refresh time to " + std::to_string(cmd.values[i].second) + "seconds" );
-					wake_up_time = new_wakeup;
-					wake_up_counter = new_wakeup;
-				}
-			} else
+				setNewRefresh(cmd.values[i].second);
+			}
+			else {
 				log.error("Set unknown module id, module id = "+ std::to_string(cmd.values[i].first));
+			}
 		}
 		return;
 	}
 	log.error("Unexpected answer from server, received command: " + cmd.state);
+}
+
+void PressureSensor::setNewRefresh(int refresh)
+{
+
+	if ((refresh < 1) || (refresh > SECONDS_IN_DAY)) {
+		log.error("Incorrect wakeup time set: " + to_string(refresh) + " seconds");
+	}
+	else {
+		log.information("Changed refresh time to " + to_string(refresh) + " seconds" );
+		wake_up_time = refresh;
+		wake_up_counter = refresh;
+	}
+}
+
+bool PressureSensor::obtainRefreshTime()
+{
+	// Try to get refresh time from server
+	log.information("Getting last refresh value from server.");
+	Parameters parameters(*agg.get(), msg, log);
+	CmdParam request, answer;
+	request.euid = sensor.euid;
+	request.param_id = Parameters::GW_GET_DEV_MOD_LAST_VALUE;
+	request.module_id = REFRESH_MODULE_ID;
+	answer = parameters.askServer(request);
+	if (answer.status && (answer.module_id == REFRESH_MODULE_ID)) {
+		try {
+			int new_refresh = stoi(answer.value[0].first);
+			setNewRefresh(new_refresh);
+		}
+		catch(...) {
+			return false;
+			log.error("Received invalid refresh time value.");
+		}
+	}
+	else {
+		log.warning("Could not retrieve latest refresh time value.");
+		return false;
+	}
+	return true;
 }

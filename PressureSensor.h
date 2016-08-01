@@ -40,7 +40,9 @@ class PressureSensor : public ModuleADT {
 		long long int getEUI(std::string adapter_id);
 		bool createMsg();
 		bool refreshValue();
+		void setNewRefresh(int refresh);
 		void threadFunction() override;
+		bool obtainRefreshTime();
 
 	public:
 		PressureSensor(IOTMessage _msg, std::shared_ptr<Aggregator> _agg);
