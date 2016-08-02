@@ -60,15 +60,6 @@ void PressureSensor::threadFunction(){
 }
 
 /**
- * Check if the device is PS
- * @param sensor_id
- * @return true if they are equal
- */
-bool PressureSensor::isPressureSensor(euid_t sensor_id) {
-	return (sensor.euid == sensor_id);
-}
-
-/**
  * Function for generating 4B EUI of pressure sensor from adapter_id
  * @param adapter_id adapter_id
  * @return 4B EUI (hash) of pressure sensor

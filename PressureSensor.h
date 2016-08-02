@@ -46,7 +46,6 @@ class PressureSensor : public ModuleADT {
 
 	public:
 		PressureSensor(IOTMessage _msg, std::shared_ptr<Aggregator> _agg);
-		bool isPressureSensor(euid_t sensor_id);
 		void parseCmdFromServer(const Command& cmd) override;
 };
 
