@@ -25,6 +25,7 @@ PressureSensor::PressureSensor(IOTMessage _msg, shared_ptr<Aggregator> _agg) :
 	sensor.euid = getEUI(msg.adapter_id);
 	sensor.pairs = 2;
 	sensor.device_id = 2;
+	send_wake_up_flag = false;
 }
 
 /**
@@ -37,9 +38,13 @@ PressureSensor::PressureSensor(IOTMessage _msg, shared_ptr<Aggregator> _agg) :
 void PressureSensor::threadFunction(){
 
 	log.information("Starting Pressure sensor thread...");
-	obtainRefreshTime();
+	//if obtaining failed, don't send refresh_time value
+	send_wake_up_flag = obtainRefreshTime();
 
 	while(!quit_global_flag) {
+		//try to get refresh value again
+		if (!send_wake_up_flag)
+			send_wake_up_flag = obtainRefreshTime();
 		pair<bool, Command> response;
 		if (createMsg()) {
 			response = agg->sendData(msg);
@@ -91,8 +96,13 @@ bool PressureSensor::createMsg() {
 	if (!refreshValue())
 		return false;
 	sensor.values.push_back({0, pressureValue});
-	sensor.values.push_back({1, (float)wake_up_time});
-	sensor.pairs = 2;
+	if (send_wake_up_flag) {
+		sensor.values.push_back({1, (float)wake_up_time});
+		sensor.pairs = 2;
+	}
+	else {
+		sensor.pairs = 1;
+	}
 	msg.device = sensor;
 	msg.time = time(NULL);
 	return true;
@@ -165,19 +175,28 @@ bool PressureSensor::obtainRefreshTime()
 	request.param_id = Parameters::GW_GET_DEV_MOD_LAST_VALUE;
 	request.module_id = REFRESH_MODULE_ID;
 	answer = parameters.askServer(request);
-	if (answer.status && (answer.module_id == REFRESH_MODULE_ID)) {
+
+	if (!answer.status) {
+		log.warning("Could not retrieve latest refresh time value from server, will try again");
+		return false;
+
+	}
+
+	if (answer.module_id == REFRESH_MODULE_ID) {
 		try {
 			int new_refresh = stoi(answer.value[0].first);
 			setNewRefresh(new_refresh);
 		}
 		catch(...) {
+			log.error("Received invalid refresh time value");
+			log.error("Value of refresh time: "+answer.value[0].first);
 			return false;
-			log.error("Received invalid refresh time value.");
 		}
 	}
 	else {
-		log.warning("Could not retrieve latest refresh time value.");
-		return false;
+		log.information("No latest refresh value found on server, setting default");
+		return true; // this is Ok, sensor is new so there are no latest data.
 	}
+
 	return true;
 }

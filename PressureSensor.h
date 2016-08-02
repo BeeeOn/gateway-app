@@ -35,6 +35,7 @@ class PressureSensor : public ModuleADT {
 	private:
 		unsigned int wake_up_time;
 		unsigned int wake_up_counter;
+		bool send_wake_up_flag;
 		float pressureValue;
 
 		long long int getEUI(std::string adapter_id);
