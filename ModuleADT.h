@@ -28,6 +28,7 @@ public:
 		virtual ~ModuleADT();
 
 		virtual void parseCmdFromServer(const Command& cmd) = 0;
+		virtual bool belongTo(euid_t sensor_id);
 		void start();
 		void stop();
 		virtual void threadFunction() = 0;							// this is thread function for running module service - makes whole class abstract
