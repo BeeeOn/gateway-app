@@ -20,7 +20,6 @@ XMLTool::XMLTool() :
 	msg(),
 	log(Poco::Logger::get("Adaapp-XML"))
 {
-	log.setLevel("trace"); // set default lowest level
 	AutoPtr<Poco::Util::IniFileConfiguration> cfg;
 	try {
 		cfg = new Poco::Util::IniFileConfiguration(std::string(MODULES_DIR)+std::string(MOD_XML)+".ini");
@@ -29,8 +28,6 @@ XMLTool::XMLTool() :
 		log.error("Exception with config file reading:\n" + ex.displayText());
 		exit (EXIT_FAILURE);
 	}
-	setLoggingLevel(log, cfg); /* Set logging level from configuration file*/
-	setLoggingChannel(log, cfg); /* Set where to log (console, file, etc.)*/
 }
 
 /**

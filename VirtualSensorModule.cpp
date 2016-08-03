@@ -17,10 +17,8 @@ using Poco::Util::IniFileConfiguration;
 VirtualSensorModule::VirtualSensorModule(IOTMessage _msg, shared_ptr<Aggregator> _agg) :
 	msg(_msg),
 	agg(_agg),
-	log(Poco::Logger::get("Adaapp-VSm"))
+	log(Poco::Logger::get("Adaapp-VS"))
 {
-	log.setLevel("trace"); // set default lowest level
-
 	loadSensors(_agg);
 	int sum = 0;
 	for (auto s:sensors) {
@@ -131,8 +129,6 @@ void VirtualSensorModule::loadSensors(shared_ptr<Aggregator> _agg) {
 		log.error("Exception with config file reading:\n" + ex.displayText());
 		exit (EXIT_FAILURE);
 	}
-	setLoggingLevel(log, cfg); /* Set logging level from configuration file*/
-	setLoggingChannel(log, cfg); /* Set where to log (console, file, etc.)*/
 
 	vs_paired_path = cfg->getString("virtual_sensor.pairing_file", "/var/lib/beeeon/vs_paired.cnt");
 

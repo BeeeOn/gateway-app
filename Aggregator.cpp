@@ -74,7 +74,6 @@ Aggregator::Aggregator(IOTMessage _msg, shared_ptr<MosqClient> _mq) :
 	cache_lock.reset(new FastMutex);
 	cache.clear();
 
-	log.setLevel("trace"); // set default lowest level
 	AutoPtr<IniFileConfiguration> cfg;
 	try {
 		cfg = new IniFileConfiguration(CONFIG_FILE);
@@ -89,8 +88,6 @@ Aggregator::Aggregator(IOTMessage _msg, shared_ptr<MosqClient> _mq) :
 	catch (Poco::Exception& ex) {
 		log.error("Exception with config file reading:\n" + ex.displayText());
 	}
-	setLoggingLevel(log, cfg); // Set logging level from config file
-	setLoggingChannel(log, cfg); // Set where to log (console, file, etc.)
 
 #ifdef LEDS_ENABLED
 	LEDControl::blinkLED(LED_PAN, 3);

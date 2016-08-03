@@ -122,8 +122,6 @@ VPTSensor::VPTSensor(IOTMessage _msg, shared_ptr<Aggregator> _agg, long long int
 		log.fatal("Exception with config file reading:\n" + ex.displayText());
 		exit (EXIT_FAILURE);
 	}
-	setLoggingLevel(log, cfg); /* Set logging level from configuration file*/
-	setLoggingChannel(log, cfg); /* Set where to log (console, file, etc.)*/
 
 	const string passwordKey(string(MOD_VPT_SENSOR)+".password");
 

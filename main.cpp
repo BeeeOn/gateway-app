@@ -6,6 +6,7 @@
  */
 
 #include <Poco/Net/NetSSL.h>
+#include <Poco/Util/LoggingConfigurator.h>
 
 #include "main.h"
 
@@ -58,6 +59,7 @@ int main (int, char**) {
 	bool mod_openhab = false;
 
 	AutoPtr<IniFileConfiguration> cfg;
+	AutoPtr<IniFileConfiguration> cfg_logging;
 	AutoPtr<IniFileConfiguration> cfg_pan;
 	AutoPtr<IniFileConfiguration> cfg_virtual_sensor;
 	AutoPtr<IniFileConfiguration> cfg_pressure_sensor;
@@ -72,7 +74,6 @@ int main (int, char**) {
 	Poco::Thread hab_thread("HAB");
 
 	Logger& log = Poco::Logger::get("Adaapp-MAIN"); // get logging utility
-	log.setLevel("trace"); // set default lowest level
 
 	cerr << "Loading AdaApp.ini from " << CONFIG_FILE << endl;
 
@@ -85,8 +86,17 @@ int main (int, char**) {
 		return EXIT_FAILURE;
 	}
 
-	setLoggingLevel(log, cfg); /* Set logging level from configuration file*/
-	setLoggingChannel(log, cfg); /* Set where to log (console, file, etc.)*/
+	/* Configure loggers */
+	try {
+		cfg_logging = new IniFileConfiguration(LOGGERS_CONFIG_FILE);
+		Poco::Util::LoggingConfigurator logging_configurator;
+		logging_configurator.configure(cfg_logging);
+	}
+	catch (Poco::Exception& ex) {
+		cerr << "Failed to configure logging: "
+			<< (string)ex.displayText() << endl;
+		Logger::root().setLevel("trace");
+	}
 
 	cerr << "Loading modules configurations from " << MODULES_DIR << endl;
 

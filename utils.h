@@ -61,13 +61,10 @@
 #define LED_LIME "/sys/devices/leds/leds/a10-olinuxino-lime:green:usr/"
 #define LED_PAN  "/sys/devices/leds/leds/a10-olinuxino-lime:green:LED1_OL/"
 
-#ifndef RELATIVE_PATH
-  #define CONFIG_FILE "/etc/beeeon/AdaApp.ini"
-#else
-  #define CONFIG_FILE RELATIVE_PATH "/beeeon/AdaApp.ini"
-#endif
-
 // mainly for .ini files and logs
+#define CONFIG_FILE MODULES_DIR "AdaApp.ini"
+#define LOGGERS_CONFIG_FILE MODULES_DIR "AdaAppLogging.ini"
+
 #define MOD_PAN             (std::string)"pan"
 #define MOD_VIRTUAL_SENSOR  (std::string)"virtual_sensor"
 #define MOD_PRESSURE_SENSOR (std::string)"pressure_sensor"

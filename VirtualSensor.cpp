@@ -72,10 +72,6 @@ VirtualSensor::VirtualSensor(AutoPtr<IniFileConfiguration> cfg, IOTMessage _msg,
 	agg(_agg),
 	log(Poco::Logger::get("Adaapp-VS"))
 {
-	log.setLevel("trace"); // set default lowest level
-	setLoggingLevel(log, cfg); /* Set logging level from configuration file*/
-	setLoggingChannel(log, cfg); /* Set where to log (console, file, etc.)*/
-	
 	if (!initSensor(cfg, sensor_num))
 		throw Poco::Exception("Init failure!");
 
@@ -104,7 +100,6 @@ VirtualSensor::VirtualSensor(AutoPtr<IniFileConfiguration> cfg, IOTMessage _msg,
 
 			std::shared_ptr<VirtualSensorValue> vsv_tmp = parseRegexp(cfg->getString("Sensor_" + toStringFromInt(sensor_num) + ".value_" + toStringFromInt(i)), it->second.module_is_actuator);
 			vsv_tmp->module_id = module_id;
-			vsv_tmp->setLoggingInfo(cfg);
 			sensor.pairs++;
 
 			if (it->second.module_is_actuator)

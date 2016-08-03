@@ -25,8 +25,6 @@ MosqClient::MosqClient(std::string client_id_, std::string main_topic_, std::str
 	agg(nullptr),
 	connected(false)
 {
-	log.setLevel("trace"); // set default lowest level
-
 	AutoPtr<IniFileConfiguration> cfg;
 	try {
 		cfg = new IniFileConfiguration(std::string(MODULES_DIR)+std::string(MOD_MQTT)+".ini");
@@ -35,9 +33,6 @@ MosqClient::MosqClient(std::string client_id_, std::string main_topic_, std::str
 		log.error("Exception with config file reading:\n" + ex.displayText());
 		exit (EXIT_FAILURE);
 	}
-
-	setLoggingLevel(log, cfg); /* Set logging level from configuration file*/
-	setLoggingChannel(log, cfg); /* Set where to log (console, file, etc.)*/
 
 	mosqpp::lib_init();        // Mandatory initialization for mosquitto library
 	log.information("mosqClient \"" + id + "\" connecting to main topic \"" + topic + "\" to broker with interface \"" + host + ":" + std::to_string(port) + "\".");

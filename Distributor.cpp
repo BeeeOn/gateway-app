@@ -60,8 +60,6 @@ Distributor::Distributor(Aggregator &_agg, shared_ptr<MosqClient> _mq) :
 	mq(_mq),
 	log(Poco::Logger::get("Adaapp-DIST"))
 {
-	log.setLevel("trace"); // set default lowest level
-
 	history_lock.reset(new FastMutex);
 	pending_lock.reset(new FastMutex);
 	pending_msgs.clear();
@@ -81,8 +79,6 @@ Distributor::Distributor(Aggregator &_agg, shared_ptr<MosqClient> _mq) :
 		log.error("Exception with config file reading:\n" + ex.displayText());
 	}
 
-	setLoggingLevel(log, cfg); /* Set logging level from configuration file*/
-	setLoggingChannel(log, cfg); /* Set where to log (console, file, etc.)*/
 }
 
 Distributor::~Distributor() {

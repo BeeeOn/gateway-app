@@ -15,7 +15,6 @@ ModuleADT::ModuleADT(std::shared_ptr<Aggregator> agg_, std::string logger_name, 
 	using Poco::AutoPtr;
 	using Poco::Util::IniFileConfiguration;
 
-	log.setLevel("trace"); // set default lowest level
 	AutoPtr<IniFileConfiguration> cfg;
 
 	try {
@@ -26,8 +25,6 @@ ModuleADT::ModuleADT(std::shared_ptr<Aggregator> agg_, std::string logger_name, 
 		inicialized = false;
 		return;
 	}
-	setLoggingLevel(log, cfg); /* Set logging level from configuration file*/
-	setLoggingChannel(log, cfg); /* Set where to log (console, file, etc.)*/
 
 	sensor.version = 1;
 	sensor.pairs = 1;
