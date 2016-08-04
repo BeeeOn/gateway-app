@@ -158,6 +158,8 @@ VPTSensor::VPTSensor(IOTMessage _msg, shared_ptr<Aggregator> _agg, long long int
 
 void VPTSensor::fetchAndSendMessage(map<euid_t, VPTDevice>::iterator &device)
 {
+	bool error = false;
+
 	if (device->second.paired && device->second.active <= VPTDevice::INACTIVE)
 		return;
 
@@ -177,11 +179,16 @@ void VPTSensor::fetchAndSendMessage(map<euid_t, VPTDevice>::iterator &device)
 		}
 		else {
 			log.error("Can't load new value of VPT sensor, send terminated");
+			error = true;
 		}
 	}
 	catch (Poco::Exception & exc) {
 		log.error(exc.displayText());
+		error = true;
 	}
+
+	if (error)
+		device->second.active -= device->second.wake_up_time;
 }
 
 unsigned int VPTSensor::nextWakeup(void)
