@@ -18,18 +18,6 @@ using Poco::Util::IniFileConfiguration;
 
 bool quit_global_flag;
 
-void mosq_thread (shared_ptr<MosqClient> mq) {
-	while (!quit_global_flag) {
-		int rc = mq->loop();
-		if (rc != MOSQ_ERR_SUCCESS) {
-			//cout << "MQTT: Trying to reconnect (" << rc << ")" << endl;
-			//TODO this whole code must be moved to mosquittoclient.cpp
-			mq->reconnect();
-			usleep(500000);
-		}
-	}
-}
-
 void killMe(int) {
 	printf("User pressed Ctrl+C\n");
 	quit_global_flag = true;
@@ -66,6 +54,7 @@ int main (int, char**) {
 	AutoPtr<IniFileConfiguration> cfg_hab;
 
 	Poco::Thread agg_thread("Aggregator");
+	Poco::Thread mqtt_thread("MosquittoClient");
 	Poco::Thread vsm_thread("VSM");
 	Poco::Thread srv_thread("TCP");
 	Poco::Thread vpt_thread("VPT");
@@ -193,8 +182,6 @@ int main (int, char**) {
 		shared_ptr<PressureSensor> psm;
 		shared_ptr<VirtualSensorModule> vsm;
 
-		std::thread mq_t;
-
 		if (mod_mqtt) {
 			log.information("Starting MQTT module.");
 			std::string mq_client_id =  cfg_mqtt->getString("mqtt.client_id", "AdaApp");
@@ -204,7 +191,7 @@ int main (int, char**) {
 
 			log.information("Starting Mosquitto Client.");
 			mosq.reset(new MosqClient(mq_client_id, mq_main_topic, "AdaApp", mq_host_addr, mq_port));
-			mq_t = std::thread(mosq_thread, mosq);
+			mqtt_thread.start(*mosq.get());
 		}
 
 		/* Mandatory module for sending and receiving data */
@@ -301,7 +288,7 @@ int main (int, char**) {
 
 		if (mod_mqtt) {
 			log.information("Stopping MQTT...");
-			mq_t.join();
+			mqtt_thread.join();
 		}
 
 		log.information("Stopping server...");

@@ -11,6 +11,8 @@
 #include <iostream>
 #include <thread>
 
+#include <Poco/Runnable.h>
+
 #include <mosquittopp.h>
 
 #include "Aggregator.h"
@@ -21,7 +23,7 @@ class Aggregator;
 /**
  * Class for communication over MQTT protocol.
  */
-class MosqClient : public mosqpp::mosquittopp {
+class MosqClient : public mosqpp::mosquittopp, public Poco::Runnable {
 private:
 	int keepalive;
 	std::string id;
@@ -34,6 +36,7 @@ private:
 
 public:
 	bool connected;
+	void run() override;
 
 private:
 	void on_connect(int rc);
