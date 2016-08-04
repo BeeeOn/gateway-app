@@ -522,6 +522,14 @@ void VPTSensor::deleteDevices(vector<euid_t> euides)
 	}
 }
 
+void VPTSensor::setAllDevicesNotPaired()
+{
+	log.debug("Setting all devices as not paired");
+	ScopedLock<Mutex> guard(devs_lock);
+	for (auto& it: map_devices)
+		it.second.paired = false;
+}
+
 void VPTSensor::deleteDevices(vector<map<euid_t, VPTDevice>::iterator> iterators)
 {
 	ScopedLock<Mutex> guard(devs_lock);

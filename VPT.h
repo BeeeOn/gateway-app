@@ -101,6 +101,7 @@ private:
 	void updateDeviceWakeUp(euid_t euid, unsigned int time);
 	void updateTimestampOnVPT(VPTDevice &dev, const std::string &action);
 	bool sendSetRequest(VPTDevice &dev, std::string url_value);
+	void setAllDevicesNotPaired();
 	void processCmdSet(Command cmd);
 	void processCmdListen(void);
 };
