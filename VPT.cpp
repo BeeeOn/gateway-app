@@ -147,7 +147,7 @@ VPTSensor::VPTSensor(IOTMessage _msg, shared_ptr<Aggregator> _agg, long long int
 
 void VPTSensor::fetchAndSendMessage(map<euid_t, VPTDevice>::iterator &device)
 {
-	if (device->second.paired && !device->second.active)
+	if (device->second.paired && device->second.active <= VPTDevice::INACTIVE)
 		return;
 
 	try {
@@ -159,6 +159,10 @@ void VPTSensor::fetchAndSendMessage(map<euid_t, VPTDevice>::iterator &device)
 				parseCmdFromServer(response.second);
 			}
 			updateTimestampOnVPT(device->second, ACTION_READ);
+
+			if (!device->second.paired)
+				device->second.active -= device->second.wake_up_time;
+
 		}
 		else {
 			log.error("Can't load new value of VPT sensor, send terminated");
@@ -201,12 +205,20 @@ void VPTSensor::run(){
 	for (auto device = map_devices.begin(); device != map_devices.end(); device++)
 		fetchAndSendMessage(device);
 
+	vector<map<euid_t, VPTDevice>::iterator> delete_devices;
 	while(!quit_global_flag) {
+		delete_devices.clear();
 		for (auto it = map_devices.begin(); it != map_devices.end(); it++) {
 			VPTDevice &device = it->second;
 
 			if (device.time_left == 0) {
 				fetchAndSendMessage(it);
+
+				if (!device.paired && device.active <= VPTDevice::INACTIVE) {
+					delete_devices.push_back(it);
+					continue;
+				}
+
 				device.time_left = device.wake_up_time;
 			}
 
@@ -214,6 +226,7 @@ void VPTSensor::run(){
 			device.time_left -= next_wakeup;
 		}
 
+		deleteDevices(delete_devices);
 		next_wakeup = nextWakeup();
 
 		for (unsigned int i = 0; i < next_wakeup; i++) {
@@ -254,7 +267,7 @@ void VPTSensor::detectDevices(void) {
 	euid_t id;
 	vector<string> devices = http_client->discoverDevices();
 	VPTDevice device;
-	device.active = VPTDevice::ACTIVE;
+	device.active = VPTDevice::FIVE_MINUTES;
 
 	for (vector<string>::iterator it = devices.begin(); it != devices.end(); it++) {
 		try {

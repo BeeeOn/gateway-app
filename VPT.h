@@ -49,6 +49,7 @@ typedef struct VPTDevice {
 	enum {
 		INACTIVE = 0,
 		ACTIVE = 1,
+		FIVE_MINUTES = 5 * 60, // 5 min in seconds
 	};
 
 	VPTDevice()
