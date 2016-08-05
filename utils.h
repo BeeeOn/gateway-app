@@ -154,6 +154,9 @@ enum MSG_PRIO {
 
 typedef uint64_t euid_t;
 
+#define EUID_MASK 0x00FFFFFF
+#define EUID_PREFIX_MASK 0xFF000000
+
 inline long long int toNumFromString(std::string num) {
 	try {
 		return(Poco::NumberParser::parseHex64(num));
@@ -477,11 +480,15 @@ struct CmdParam {
 		status(false)
 	{ };
 
-	inline std::vector<euid_t> getEuides()
+	inline std::vector<euid_t> getEuides(euid_t prefix = 0)
 	{
 		std::vector<euid_t> euides;
 		for (auto const& it: value) {
-			euides.push_back(std::stoull(std::get<0>(it), nullptr, HEX_NUMBER));
+			euid_t euid = std::stoull(std::get<0>(it), nullptr, HEX_NUMBER);
+			if (!prefix)
+				euides.push_back(euid);
+			else if ((euid & EUID_PREFIX_MASK) == prefix)
+				euides.push_back(euid);
 		}
 		return euides;
 	}

@@ -123,6 +123,13 @@ CmdParam Parameters::askServer(CmdParam cmd_request)
 	return cmd_request;
 }
 
+CmdParam Parameters::getAllPairedDevices()
+{
+	CmdParam request;
+	request.param_id = GW_GET_ALL_DEVS;
+	return askServer(request);
+}
+
 /**
  * Returns a vector (list) of IP address (active connections).
  */
