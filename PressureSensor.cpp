@@ -22,16 +22,9 @@ PressureSensor::PressureSensor(IOTMessage _msg, shared_ptr<Aggregator> _agg) :
 	ModuleADT(_agg, "Adaapp-PS", MOD_PRESSURE_SENSOR, _msg),
 	wake_up_time(5)
 {
-	//sensor.version = 1;				// MC: implicitly set in module_ADT but keeping it here just for this comment.
 	sensor.euid = getEUI(msg.adapter_id);
 	sensor.pairs = 2;
 	sensor.device_id = 2;
-
-	//msg.state = "data";				// MC: implicitly set in module_ADT
-	//msg.priority = MSG_PRIO_SENSOR;	// MC: implicitly set in module_ADT
-	//msg.offset = 0;					// MC: implicitly set in module_ADT
-
-	//tt = fillDeviceTable();			// MC: implicitly set in module_ADT
 }
 
 /**
