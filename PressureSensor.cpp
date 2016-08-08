@@ -10,24 +10,22 @@
 
 #include "main.h"
 #include "PressureSensor.h"
+#include "Parameters.h"
 
 using namespace std;
 using Poco::AutoPtr;
+
+#define REFRESH_MODULE_ID 0x01
+#define SECONDS_IN_DAY 86400
 
 PressureSensor::PressureSensor(IOTMessage _msg, shared_ptr<Aggregator> _agg) :
 	ModuleADT(_agg, "Adaapp-PS", MOD_PRESSURE_SENSOR, _msg),
 	wake_up_time(5)
 {
-	//sensor.version = 1;				// MC: implicitly set in module_ADT but keeping it here just for this comment.
 	sensor.euid = getEUI(msg.adapter_id);
 	sensor.pairs = 2;
 	sensor.device_id = 2;
-
-	//msg.state = "data";				// MC: implicitly set in module_ADT
-	//msg.priority = MSG_PRIO_SENSOR;	// MC: implicitly set in module_ADT
-	//msg.offset = 0;					// MC: implicitly set in module_ADT
-
-	//tt = fillDeviceTable();			// MC: implicitly set in module_ADT
+	send_wake_up_flag = false;
 }
 
 /**
@@ -40,8 +38,13 @@ PressureSensor::PressureSensor(IOTMessage _msg, shared_ptr<Aggregator> _agg) :
 void PressureSensor::threadFunction(){
 
 	log.information("Starting Pressure sensor thread...");
+	//if obtaining failed, don't send refresh_time value
+	send_wake_up_flag = obtainRefreshTime();
 
 	while(!quit_global_flag) {
+		//try to get refresh value again
+		if (!send_wake_up_flag)
+			send_wake_up_flag = obtainRefreshTime();
 		pair<bool, Command> response;
 		if (createMsg()) {
 			response = agg->sendData(msg);
@@ -59,15 +62,6 @@ void PressureSensor::threadFunction(){
 			sleep(1);
 		}
 	}
-}
-
-/**
- * Check if the device is PS
- * @param sensor_id
- * @return true if they are equal
- */
-bool PressureSensor::isPressureSensor(euid_t sensor_id) {
-	return (sensor.euid == sensor_id);
 }
 
 /**
@@ -102,8 +96,13 @@ bool PressureSensor::createMsg() {
 	if (!refreshValue())
 		return false;
 	sensor.values.push_back({0, pressureValue});
-	sensor.values.push_back({1, (float)wake_up_time});
-	sensor.pairs = 2;
+	if (send_wake_up_flag) {
+		sensor.values.push_back({1, (float)wake_up_time});
+		sensor.pairs = 2;
+	}
+	else {
+		sensor.pairs = 1;
+	}
 	msg.device = sensor;
 	msg.time = time(NULL);
 	return true;
@@ -142,19 +141,62 @@ void PressureSensor::parseCmdFromServer(const Command& cmd){
 	if (cmd.state == "set"){
 		for( unsigned int i =0; i < cmd.values.size(); i++){
 			if (cmd.values[i].first == 1) { //Change refresh time
-				int new_wakeup = (int) cmd.values[i].second;
-				if ((new_wakeup < 1) || (new_wakeup > 86400)){ // less than 1 second or more than 24 hours
-					log.error("Incorrect wakeup time set: "+ std::to_string(new_wakeup)+" seconds!");
-				}
-				else{
-					log.information("Changed refresh time to " + std::to_string(cmd.values[i].second) + "seconds" );
-					wake_up_time = new_wakeup;
-					wake_up_counter = new_wakeup;
-				}
-			} else
+				setNewRefresh(cmd.values[i].second);
+			}
+			else {
 				log.error("Set unknown module id, module id = "+ std::to_string(cmd.values[i].first));
+			}
 		}
 		return;
 	}
 	log.error("Unexpected answer from server, received command: " + cmd.state);
+}
+
+void PressureSensor::setNewRefresh(int refresh)
+{
+
+	if ((refresh < 1) || (refresh > SECONDS_IN_DAY)) {
+		log.error("Incorrect wakeup time set: " + to_string(refresh) + " seconds");
+	}
+	else {
+		log.information("Changed refresh time to " + to_string(refresh) + " seconds" );
+		wake_up_time = refresh;
+		wake_up_counter = refresh;
+	}
+}
+
+bool PressureSensor::obtainRefreshTime()
+{
+	// Try to get refresh time from server
+	log.information("Getting last refresh value from server.");
+	Parameters parameters(*agg.get(), msg, log);
+	CmdParam request, answer;
+	request.euid = sensor.euid;
+	request.param_id = Parameters::GW_GET_DEV_MOD_LAST_VALUE;
+	request.module_id = REFRESH_MODULE_ID;
+	answer = parameters.askServer(request);
+
+	if (!answer.status) {
+		log.warning("Could not retrieve latest refresh time value from server, will try again");
+		return false;
+
+	}
+
+	if (answer.module_id == REFRESH_MODULE_ID) {
+		try {
+			int new_refresh = stoi(answer.value[0].first);
+			setNewRefresh(new_refresh);
+		}
+		catch(...) {
+			log.error("Received invalid refresh time value");
+			log.error("Value of refresh time: "+answer.value[0].first);
+			return false;
+		}
+	}
+	else {
+		log.information("No latest refresh value found on server, setting default");
+		return true; // this is Ok, sensor is new so there are no latest data.
+	}
+
+	return true;
 }

@@ -135,6 +135,8 @@ void XMLTool::createParam(XMLWriter* w, CmdParam par, string state){
 	att.addAttribute("", "", "param_id", "", toStringFromInt(par.param_id));
 	if (par.euid > 0)
 		att.addAttribute("", "", "euid", "", toStringFromLongHex(par.euid));
+	if (par.module_id >= 0)
+		att.addAttribute("", "", "module_id", "", toStringFromLongHex(par.module_id));
 
 	w->startElement("", "parameter", "", att);
 
@@ -209,6 +211,9 @@ Command XMLTool::parseXML(string str) {
 							if (attribute->nodeName().compare("device_id") == 0) {
 								device_id = toNumFromString(attribute->nodeValue());
 							}
+							if (attribute->nodeName().compare("module_id") == 0) {
+								cmd.params.module_id = toNumFromString(attribute->nodeValue());
+							}
 						}
 						attributes->release();
 					}
@@ -240,7 +245,7 @@ Command XMLTool::parseXML(string str) {
 					for(unsigned int i = 0; i < attributes->length(); i++) {
 						attribute = attributes->item(i);
 						if (attribute->nodeName().compare("param_id") == 0 || attribute->nodeName().compare("id") == 0) {
-							cmd.params.param_id = toNumFromString(attribute->nodeValue());
+							cmd.params.param_id = toIntFromString(attribute->nodeValue());
 						}
 						else if (attribute->nodeName().compare("euid") == 0) {
 							cmd.params.euid = toNumFromString(attribute->nodeValue());

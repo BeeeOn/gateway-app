@@ -295,7 +295,7 @@ void Aggregator::parseCmd(Command cmd) {
 		param->cmdFromServer(cmd);
 	}
 	else {
-		if (psm && psm->isPressureSensor(cmd.euid)) {
+		if (psm && psm->belongTo(cmd.euid)) {
 			log.information("Sending incoming command to PSM");
 			psm->parseCmdFromServer(cmd);
 		}

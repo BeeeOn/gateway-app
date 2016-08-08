@@ -35,16 +35,18 @@ class PressureSensor : public ModuleADT {
 	private:
 		unsigned int wake_up_time;
 		unsigned int wake_up_counter;
+		bool send_wake_up_flag;
 		float pressureValue;
 
 		long long int getEUI(std::string adapter_id);
 		bool createMsg();
 		bool refreshValue();
+		void setNewRefresh(int refresh);
 		void threadFunction() override;
+		bool obtainRefreshTime();
 
 	public:
 		PressureSensor(IOTMessage _msg, std::shared_ptr<Aggregator> _agg);
-		bool isPressureSensor(euid_t sensor_id);
 		void parseCmdFromServer(const Command& cmd) override;
 };
 

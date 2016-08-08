@@ -57,6 +57,15 @@ void ModuleADT::stop() {
 	}
 }
 
+/**
+ * @brief Check if device with specific id is part of this module
+ * can be overriden in specific child class.
+ * @return true if it is
+ */
+bool ModuleADT::belongTo(euid_t sensor_id) {
+	return (sensor.euid == sensor_id);
+}
+
 ModuleADT::~ModuleADT() {
 
 }
