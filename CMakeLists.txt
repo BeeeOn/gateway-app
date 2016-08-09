@@ -69,6 +69,7 @@ set (ADAAPP_SOURCES
 	Belkin_WeMo.cpp
 	Bluetooth.cpp
 	Distributor.cpp
+	IODaemonMsg.cpp
 	IOcontrol.cpp
 	JSON.cpp HTTP.cpp
 	JablotronModule.cpp
