@@ -51,17 +51,28 @@ void LedModule::threadFunction()
 	socket = Poco::Net::DatagramSocket(socketAddress);
 	socket.setReceiveTimeout(Poco::Timespan(5, 0));
 
-	createServerMsg(createDaemonMsg());
-	response = agg->sendData(msg);
-	if (response.first)
-		parseCmdFromServer(response.second);
-
+	bool is_initialized = false;
 	while(!quit_global_flag) {
+		// we keep asking server and resending messages
+		// to ioDaemon until we got answer "update" message
+		// from ioDaemon, which means it is alive and understands.
+		if (!is_initialized) {
+			ioDaemonMsg = createDaemonMsg();
+			ledConfiguration ledConf;
+			if (recoverLastValue(ledConf)) {
+				ioDaemonMsg.setLedConf(ledConf);
+				sendToDaemon(ioDaemonMsg);
+			}
+		}
+
 		IODaemonMsg answerFromDaemon;
 		IODaemonMsg ioMessage = createDaemonMsg();
 		answerFromDaemon = receiveFromDaemon();
 
 		if (answerFromDaemon.isUpdate() && answerFromDaemon.isValid()) {
+			// once we get update from iodaemon
+			// there is no need to asking server for last value
+			is_initialized = true;
 			ioMessage.setLedConf(answerFromDaemon.getLedConf());
 			createServerMsg(ioMessage);
 			response = agg->sendData(msg);
@@ -107,9 +118,8 @@ void LedModule::parseCmdFromServer(const Command& cmd)
 
 	if (cmd.state == "set") {
 		log.debug("Received command 'set' from server");
-
 		for (unsigned int i = 0; i < cmd.values.size(); i++) {
-			struct ledConfiguration ledConf;
+			ledConfiguration ledConf;
 
 			switch (cmd.values[i].first) {
 			case MODULE_ID_RED:
@@ -209,11 +219,73 @@ IODaemonMsg LedModule::createDaemonMsg()
 	ioMessage.setPriority(USER_PRIORITY);
 	ioMessage.setValidity(true);
 
-	struct ledConfiguration ledConf;
+	ledConfiguration ledConf;
 	ledConf.m_red = false;
 	ledConf.m_green = false;
 	ledConf.m_blue = 0;
 	ioMessage.setLedConf(ledConf);
 
 	return ioMessage;
+}
+
+/*
+ * @brief Method for recovering last configuration from server
+ * @return true if recovery was successful
+ */
+bool LedModule::recoverLastValue(ledConfiguration &new_config)
+{
+	int value;
+	if (!obtainLastValue(MODULE_ID_RED, value))
+		return false;
+	new_config.m_red = value;
+
+	if (!obtainLastValue(MODULE_ID_GREEN, value))
+		return false;
+	new_config.m_green = value;
+
+	if (!obtainLastValue(MODULE_ID_BLUE, value))
+		return false;
+	new_config.m_blue = value;
+
+	return true;
+}
+
+/**
+ * @brief Method for requesting last value of specific module from server
+ * @param module_id id of requested module's last value
+ * @param value Obtained value
+ * @return if value has valid data
+ */
+bool LedModule::obtainLastValue(int module_id, int &value)
+{
+	log.information("Getting last actuator value from server");
+	Parameters parameters(*(agg.get()), msg, log);
+	CmdParam request, answer;
+	request.euid = sensor.euid;
+	request.param_id = Parameters::GW_GET_DEV_MOD_LAST_VALUE;
+	request.module_id = module_id;
+	answer = parameters.askServer(request);
+
+	if (!answer.status) {
+		log.warning("Could not retrieve latest actuator value from server, will try again");
+		return false;
+	}
+
+	if (answer.module_id == module_id) {
+		try {
+			value = stoi(answer.value[0].first);
+			log.information("Recovered value of module_id: "
+					+ to_string(module_id) +", value: "+ to_string(value));
+			return true;
+		}
+		catch(...) {
+			log.error("Received invalid value: " + answer.value[0].first);
+			return false;
+		}
+	}
+	else {
+		log.information("No latest value found on server, setting default");
+		value = 0; //turn off all leds
+		return true; // this is Ok, sensor is new so there are no latest data.
+	}
 }

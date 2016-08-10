@@ -41,6 +41,9 @@ private:
 	IODaemonMsg receiveFromDaemon();
 	bool createServerMsg(const IODaemonMsg &ioMessage);
 	IODaemonMsg createDaemonMsg();
+	bool createMsg();
+	bool recoverLastValue(struct ledConfiguration &new_config);
+	bool obtainLastValue(int module_id, int &value);
 
 public:
 	LedModule(IOTMessage _msg, std::shared_ptr<Aggregator> _agg);
