@@ -75,6 +75,7 @@ set (ADAAPP_SOURCES
 	PanInterface.cpp
 	Parameters.cpp
 	PressureSensor.cpp
+	SerialControl.cpp
 	TCP.cpp Aggregator.cpp
 	VirtualSensor.cpp
 	VirtualSensorModule.cpp
