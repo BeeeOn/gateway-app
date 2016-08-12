@@ -73,16 +73,17 @@ set (ADAAPP_SOURCES
 	IOcontrol.cpp
 	JSON.cpp HTTP.cpp
 	JablotronModule.cpp
+	LedModule.cpp
 	MQTTDataModule.cpp
 	MQTTDataParser.cpp
 	ModuleADT.cpp
 	MosqClient.cpp
-	VPT.cpp
 	PanInterface.cpp
 	Parameters.cpp
 	PressureSensor.cpp
 	SerialControl.cpp
 	TCP.cpp Aggregator.cpp
+	VPT.cpp
 	VirtualSensor.cpp
 	VirtualSensorModule.cpp
 	VirtualSensorValue.cpp
