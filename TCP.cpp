@@ -80,7 +80,6 @@ IOTReceiver::IOTReceiver(shared_ptr<Aggregator> _agg, string _address, int _port
 	send_queue = nullptr;
 	queue_mutex = nullptr;
 
-	log.setLevel("trace"); // set default lowest level
 	AutoPtr<IniFileConfiguration> cfg;
 	try {
 		cfg = new IniFileConfiguration(std::string(MODULES_DIR)+std::string(MOD_TCP)+".ini");
@@ -89,8 +88,6 @@ IOTReceiver::IOTReceiver(shared_ptr<Aggregator> _agg, string _address, int _port
 		log.error("Exception with config file reading:\n" + ex.displayText());
 		exit (EXIT_FAILURE);
 	}
-	setLoggingLevel(log, cfg); /* Set logging level from configuration file*/
-	setLoggingChannel(log, cfg); /* Set where to log (console, file, etc.)*/
 }
 
 void IOTReceiver::keepaliveInit(IniFileConfiguration * cfg) {

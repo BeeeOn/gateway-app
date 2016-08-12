@@ -29,9 +29,8 @@ VirtualSensorValue::VirtualSensorValue() :
 	actual_value(0),
 	module_id(0),
 	timer(NULL),
-	log(Poco::Logger::get("Adaapp-VSv"))
+	log(Poco::Logger::get("Adaapp-VS"))
 {
-	log.setLevel("trace"); // set default lowest level
 	value_change_mutex.reset(new Poco::FastMutex);
 }
 
@@ -117,11 +116,6 @@ void VirtualSensorValue::nextVal(Poco::Timer&) {
 void VirtualSensorValue::startTimer() {
 	timer = new Poco::Timer(change_time*1000, change_time*1000);  // *1000 because of conversion to ms
 	timer->start(TimerCallback<VirtualSensorValue>(*this, &VirtualSensorValue::nextVal));
-}
-
-void VirtualSensorValue::setLoggingInfo(AutoPtr<IniFileConfiguration> cfg) {
-	setLoggingLevel(log, cfg); /* Set logging level from configuration file*/
-	setLoggingChannel(log, cfg); /* Set where to log (console, file, etc.)*/
 }
 
 VirtualSensorValue::~VirtualSensorValue() {

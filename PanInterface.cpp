@@ -21,7 +21,6 @@ PanInterface::PanInterface(IOTMessage _msg, shared_ptr<Aggregator> _agg) :
 	agg(_agg),
 	log(Poco::Logger::get("Adaapp-SPI"))
 {
-	log.setLevel("trace"); // set default lowest level
 	AutoPtr<IniFileConfiguration> cfg;
 	try {
 		cfg = new IniFileConfiguration(string(MODULES_DIR)+string(MOD_PAN)+".ini");
@@ -30,8 +29,6 @@ PanInterface::PanInterface(IOTMessage _msg, shared_ptr<Aggregator> _agg) :
 		log.fatal("Exception with config file reading:\n" + ex.displayText());
 		exit(EXIT_FAILURE);
 	}
-	setLoggingLevel(log, cfg); /* Set logging level from configuration file*/
-	setLoggingChannel(log, cfg); /* Set where to log (console, file, etc.)*/
 
 	msg.time = (long long int)time(0);
 

@@ -61,13 +61,10 @@
 #define LED_LIME "/sys/devices/leds/leds/a10-olinuxino-lime:green:usr/"
 #define LED_PAN  "/sys/devices/leds/leds/a10-olinuxino-lime:green:LED1_OL/"
 
-#ifndef RELATIVE_PATH
-  #define CONFIG_FILE "/etc/beeeon/AdaApp.ini"
-#else
-  #define CONFIG_FILE RELATIVE_PATH "/beeeon/AdaApp.ini"
-#endif
-
 // mainly for .ini files and logs
+#define CONFIG_FILE MODULES_DIR "AdaApp.ini"
+#define LOGGERS_CONFIG_FILE MODULES_DIR "AdaAppLogging.ini"
+
 #define MOD_PAN             (std::string)"pan"
 #define MOD_VIRTUAL_SENSOR  (std::string)"virtual_sensor"
 #define MOD_PRESSURE_SENSOR (std::string)"pressure_sensor"
@@ -220,139 +217,6 @@ struct EEPROM_ITEMS {
 	}
 };
 
-inline bool getDebugFlag (void) {
-	Poco::AutoPtr<Poco::Util::IniFileConfiguration> cfg;
-	try {
-		cfg = new Poco::Util::IniFileConfiguration(CONFIG_FILE);
-	}
-	catch (Poco::Exception& ex) {
-		std::cerr << "Exception with config file reading:" << std::endl;
-		std::cerr << ex.displayText() << std::endl;
-		return false;
-	}
-
-	return(cfg->getBool("adapter.debug", false));
-}
-
-inline bool getConsoleLogFlag (void) {
-	Poco::AutoPtr<Poco::Util::IniFileConfiguration> cfg;
-	try {
-		cfg = new Poco::Util::IniFileConfiguration(CONFIG_FILE);
-	}
-	catch (Poco::Exception& ex) {
-		std::cerr << "Exception with config file reading:" << std::endl;
-		std::cerr << ex.displayText() << std::endl;
-		return false;
-	}
-
-	return(cfg->getBool("adapter.console_print", false));
-}
-
-inline bool getLogFileFlag (void) {
-	Poco::AutoPtr<Poco::Util::IniFileConfiguration> cfg;
-	try {
-		cfg = new Poco::Util::IniFileConfiguration(CONFIG_FILE);
-	}
-	catch (Poco::Exception& ex) {
-		std::cerr << "Exception with config file reading:" << std::endl;
-		std::cerr << ex.displayText() << std::endl;
-		return false;
-	}
-
-	return(cfg->getBool("adapter.logfile_print", false));
-}
-
-inline bool getLoggingFlag (std::string component) {
-	Poco::AutoPtr<Poco::Util::IniFileConfiguration> cfg;
-	try {
-		cfg = new Poco::Util::IniFileConfiguration(CONFIG_FILE);
-	}
-	catch (Poco::Exception& ex) {
-		std::cerr << "Exception with config file reading:" << std::endl;
-		std::cerr << ex.displayText() << std::endl;
-		return false;
-	}
-
-	return(cfg->getBool("logging."+component, false));
-}
-
-inline void setLoggingLevel(Poco::Logger& log,Poco::AutoPtr<Poco::Util::IniFileConfiguration> cfg) {
-	try{
-		std::string level = cfg->getString("Logging.level");
-		log.setLevel(level);
-	}
-	catch (Poco::Exception& ex) {
-		log.setLevel("trace");
-		log.error("Error at setting logging level, setting \"trace\" level default.");
-	}
-
-}
-
-inline void setLoggingChannel(Poco::Logger& log,Poco::AutoPtr<Poco::Util::IniFileConfiguration> cfg) {
-	bool console_log = false;
-	Poco::AutoPtr<Poco::SplitterChannel> pSplitter(new Poco::SplitterChannel);
-
-	try{
-		std::string log_path = cfg->getString("Logging.log_to_file");
-		std::string log_file_rotation = cfg->getString("Logging.log_to_file_rotation", "512 K");
-		std::string log_purge_count = cfg->getString("Logging.log_to_file_purge_count", "1");
-		std::string log_pattern = cfg->getString("Logging.log_pattern", DEFAULT_LOG_FORMAT);
-		console_log = cfg->getBool("Logging.log_to_console", false);
-
-		Poco::AutoPtr<Poco::ConsoleChannel> pCons(new Poco::ConsoleChannel);
-		Poco::AutoPtr<Poco::FileChannel> pFile(new Poco::FileChannel(log_path));
-		pFile->setProperty("path", log_path);
-		pFile->setProperty("rotation", log_file_rotation);
-		pFile->setProperty("purgeCount", log_purge_count);
-		pFile->setProperty("archive", "timestamp");
-		pFile->setProperty("times", "local");
-		//pFile->setProperty("compress", "true"); // Archive log files using the gzip compression method
-
-		Poco::AutoPtr<Poco::PatternFormatter> pPF(new Poco::PatternFormatter);
-		pPF->setProperty("times", "local");
-		pPF->setProperty("pattern", log_pattern);
-
-		Poco::AutoPtr<Poco::FormattingChannel> pCC(new Poco::FormattingChannel(pPF, pCons));
-		Poco::AutoPtr<Poco::FormattingChannel> pFC(new Poco::FormattingChannel(pPF, pFile));
-
-		pSplitter->addChannel(pFC);
-		if (console_log) {
-			pSplitter->addChannel(pCC);
-		}
-	}
-	catch (Poco::Exception& ex) {
-		std::cerr << "Exception occured during logger setup: " << ex.displayText() << std::endl;
-	}
-	log.setChannel(pSplitter);
-}
-
-/**
- * Returns default directory where logs will be stored. This atribute is stored in AdaApp.ini in section Logging. If this DIR does not exist, this function will create it with its full path (including parent directories).
- * @return Directory (needed with ending slash ("/") - e.g. "/tmp/")
- */
-inline std::string getLoggingDir () {
-	Poco::AutoPtr<Poco::Util::IniFileConfiguration> cfg;
-	try {
-		cfg = new Poco::Util::IniFileConfiguration(CONFIG_FILE);
-	}
-	catch (Poco::Exception& ex) {
-		std::cerr << "Exception with config file reading:" << std::endl;
-		std::cerr << ex.displayText() << std::endl;
-		return("/tmp/");
-	}
-	std::string logs_dir = cfg->getString("logging.logs_dir", "/tmp/");
-
-	Poco::File x (logs_dir);
-	if (!x.exists()) {
-		x.createDirectories();      // if path does not exists, create new recursively (with all parent directories)
-	}
-	else if (!x.isDirectory()) {  // path exists but is not a directory
-		throw ("Conflict with defined logging directory - file \"" + logs_dir + "\" exists but is not directory!!");
-	}
-
-	return logs_dir;
-}
-
 inline EEPROM_ITEMS parseEEPROM(void) {
 	EEPROM_ITEMS eeprom;
 	eeprom.valid = false;
@@ -391,78 +255,6 @@ inline EEPROM_ITEMS parseEEPROM(void) {
 	eeprom_file.close();
 #endif
 	return eeprom;
-}
-
-inline Poco::Logger& getLogger (std::string name, std::string path, bool print_source = false) {
-	std::string logs_dir = getLoggingDir();
-	std::string file_path = logs_dir + path + ".log";
-
-	// Machanism to ensure that log will be created.
-	int i = 0;
-	while (true) {
-		Poco::File x(file_path);
-		if ((!x.exists()) || (x.canWrite()) || (i >= 10))
-			break;
-
-		file_path = logs_dir + path + std::to_string(i) + ".log";
-		i++;
-	}
-
-	if (i >= 10)
-			throw std::runtime_error("Can't create log \"" + path + ".log\"!!");
-
-	Poco::AutoPtr<Poco::SplitterChannel> splitC(new Poco::SplitterChannel);
-	Poco::AutoPtr<Poco::ConsoleChannel> consoleC(new Poco::ConsoleChannel);
-
-	// Channel for writing to final file
-	Poco::AutoPtr<Poco::FileChannel> fileC(new Poco::FileChannel);
-	fileC->setProperty("path", file_path);
-	fileC->setProperty("rotation", "daily");
-	fileC->setProperty("purgeAge", "1 months");
-	fileC->setProperty("archive", "timestamp");
-
-	Poco::AutoPtr<Poco::PatternFormatter> formatter(new Poco::PatternFormatter);
-	if (print_source)
-		formatter->setProperty("pattern", "%H:%M:%S %s: %t");
-	else
-		formatter->setProperty("pattern", "%H:%M:%S: %t");
-
-	// Crate channel which will print to the file
-	Poco::AutoPtr<Poco::FormattingChannel> formatC(new Poco::FormattingChannel(formatter, fileC));
-
-	Poco::AutoPtr<Poco::PatternFormatter> formatterConsole(new Poco::PatternFormatter);
-	formatterConsole->setProperty("pattern", "%s: %t");
-	Poco::AutoPtr<Poco::FormattingChannel> formatConsoleC(new Poco::FormattingChannel(formatterConsole, consoleC));
-
-	if (getLogFileFlag())
-		splitC->addChannel(formatC);
-
-	if (getConsoleLogFlag())
-		splitC->addChannel(formatConsoleC);
-
-	// Get logger reference (assigned dynamically)
-	Poco::Logger& logger = Poco::Logger::get(name);
-	logger.setChannel(splitC);
-
-	return logger;
-}
-
-inline Poco::Logger& getErrLogger () {
-	Poco::AutoPtr<Poco::FileChannel> fileC(new Poco::FileChannel);
-	fileC->setProperty("path", getLoggingDir() + (std::string)"error.log");
-	fileC->setProperty("rotation", "daily");
-	fileC->setProperty("purgeAge", "1 months");
-	fileC->setProperty("archive", "timestamp");
-
-	Poco::AutoPtr<Poco::PatternFormatter> formatter(new Poco::PatternFormatter);
-	formatter->setProperty("pattern", "%H:%M:%S %s: [%p] %t");
-
-	Poco::AutoPtr<Poco::FormattingChannel> formatC(new Poco::FormattingChannel(formatter, fileC));
-
-	Poco::Logger& logger = Poco::Logger::get("Error");
-	logger.setChannel(formatC);
-
-	return logger;
 }
 
 /**

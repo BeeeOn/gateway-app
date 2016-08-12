@@ -19,8 +19,6 @@ OpenHAB::OpenHAB(IOTMessage _msg, std::shared_ptr<Aggregator> _agg) :
 	log(Poco::Logger::get("Adaapp-HAB")),
 	msg(_msg)
 {
-	log.setLevel("trace"); // set default lowest level
-
 	AutoPtr<IniFileConfiguration> cfg;
 	try {
 		cfg = new IniFileConfiguration(string(MODULES_DIR)+string(MOD_OPENHAB)+".ini");
@@ -29,8 +27,6 @@ OpenHAB::OpenHAB(IOTMessage _msg, std::shared_ptr<Aggregator> _agg) :
 		log.error("OH: Exception with config file reading:\n" + ex.displayText());
 		exit (EXIT_FAILURE);
 	}
-	setLoggingLevel(log, cfg); /* Set logging level from configuration file*/
-	setLoggingChannel(log, cfg); /* Set where to log (console, file, etc.)*/
 
 	msg.state = "data";
 	msg.priority = MSG_PRIO_SENSOR;
