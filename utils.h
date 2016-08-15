@@ -72,7 +72,6 @@
 #define MOD_MQTT            (std::string)"mqtt"
 #define MOD_OPENHAB         (std::string)"openhab"
 #define MOD_TCP         	(std::string)"tcp"
-#define MOD_XML         	(std::string)"xmltool"
 #define MOD_JSON         	(std::string)"json"
 #define MOD_PARAM			(std::string)"parameters"
 

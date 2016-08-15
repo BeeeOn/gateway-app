@@ -20,14 +20,6 @@ XMLTool::XMLTool() :
 	msg(),
 	log(Poco::Logger::get("Adaapp-XML"))
 {
-	AutoPtr<Poco::Util::IniFileConfiguration> cfg;
-	try {
-		cfg = new Poco::Util::IniFileConfiguration(std::string(MODULES_DIR)+std::string(MOD_XML)+".ini");
-	}
-	catch (Poco::Exception& ex) {
-		log.error("Exception with config file reading:\n" + ex.displayText());
-		exit (EXIT_FAILURE);
-	}
 }
 
 /**
