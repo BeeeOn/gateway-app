@@ -83,7 +83,7 @@ public:
 	void parseCmdFromServer(Command cmd);
 
 private:
-	std::string adapter_id;
+	long long int adapter_id;
 	std::shared_ptr<Aggregator> agg;
 	std::unique_ptr<HTTPClient> http_client;
 	std::unique_ptr<JSONDevices> json;
@@ -112,7 +112,7 @@ private:
 	void pairDevices();
 	euid_t parseDeviceId(std::string &content);
 	void updateDeviceWakeUp(euid_t euid, unsigned int time);
-	void updateTimestampOnVPT(VPTDevice &dev, const std::string &action);
+	void updateTimestampOnVPT(VPTDevice &dev, const int action);
 	bool sendSetRequest(VPTDevice &dev, std::string url_value);
 	void setAllDevicesNotPaired();
 	void processCmdSet(Command cmd);

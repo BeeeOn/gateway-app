@@ -26,7 +26,7 @@ using namespace std;
 using namespace Poco::Net;
 using Poco::Logger;
 
-const string UNKNOWN_ADAPTER_IP = "0.0.0.0";
+const uint32_t UNKNOWN_ADAPTER_IP = 0;
 
 HTTPClient::HTTPClient(uint16_t _port) : log(Poco::Logger::get("Adaapp-VPT")) {
 	receiveTime = Poco::Timespan(RECEIVE_TIMEOUT, 0);
@@ -37,8 +37,10 @@ vector<string> HTTPClient::discoverDevices(void) {
 	return detectNetworkDevices(detectNetworkInterfaces());
 }
 
-string HTTPClient::findAdapterIP(std::string target_ip) {
+uint32_t HTTPClient::findAdapterIP(std::string target_ip) {
 	Poco::Net::NetworkInterface::NetworkInterfaceList list = Poco::Net::NetworkInterface::list(); ///< List of interfaces
+
+	struct in_addr *addr;
 
 	if (!list.empty()) {
 		for(auto itr=list.begin(); itr!=list.end(); ++itr) {
@@ -54,8 +56,10 @@ string HTTPClient::findAdapterIP(std::string target_ip) {
 				mask = ip_itr->get<MASK_ADDR>();
 				IPAddress network_ip = ip_itr->get<IP_ADDR>() & mask;
 				//get<IP_BROADCAST>() does not work as expected
-				if (isFromSubnet(network_ip, mask, IPAddress(target_ip)))
-					return ip_itr->get<IP_ADDR>().toString();
+				if (isFromSubnet(network_ip, mask, IPAddress(target_ip))) {
+					addr = (struct in_addr *) ip_itr->get<IP_ADDR>().addr();
+					return (uint32_t) addr->s_addr;
+				}
 			}
 		}
 	}
