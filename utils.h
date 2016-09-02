@@ -74,6 +74,7 @@
 #define MOD_TCP         	(std::string)"tcp"
 #define MOD_JSON         	(std::string)"json"
 #define MOD_PARAM			(std::string)"parameters"
+#define MOD_JABLOTRON       (std::string)"jablotron"
 
 #define DEFAULT_LOG_FORMAT	(std::string)"[%Y-%m-%d %H:%M:%S, %q%q, %s, %T] %t"
 

@@ -69,6 +69,7 @@ set (ADAAPP_SOURCES
 	Distributor.cpp
 	IOcontrol.cpp
 	JSON.cpp HTTP.cpp
+	JablotronModule.cpp
 	ModuleADT.cpp
 	MosqClient.cpp
 	Openhab.cpp VPT.cpp

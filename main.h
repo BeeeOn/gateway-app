@@ -29,6 +29,7 @@
 #include "PanInterface.h"
 #include "TCP.h"
 #include "VirtualSensor.h"
+#include "JablotronModule.h"
 #include "VPT.h"
 
 #endif	/* MAIN_H */
