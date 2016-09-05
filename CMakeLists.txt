@@ -70,6 +70,7 @@ set (ADAAPP_SOURCES
 	IOcontrol.cpp
 	JSON.cpp HTTP.cpp
 	JablotronModule.cpp
+	MQTTDataParser.cpp
 	ModuleADT.cpp
 	MosqClient.cpp
 	Openhab.cpp VPT.cpp
