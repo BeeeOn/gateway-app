@@ -46,6 +46,7 @@ int main (int, char**) {
 	bool mod_vpt = false;
 	bool mod_openhab = false;
 	bool mod_jablotron = false;
+	bool mod_mqtt_data_module = false;
 
 	AutoPtr<IniFileConfiguration> cfg;
 	AutoPtr<IniFileConfiguration> cfg_logging;
@@ -56,6 +57,7 @@ int main (int, char**) {
 	AutoPtr<IniFileConfiguration> cfg_mqtt;
 	AutoPtr<IniFileConfiguration> cfg_hab;
 	AutoPtr<IniFileConfiguration> cfg_jablotron;
+	AutoPtr<IniFileConfiguration> cfg_mqtt_data_module;
 
 	Poco::Thread agg_thread("Aggregator");
 	Poco::Thread mqtt_thread("MosquittoClient");
@@ -122,6 +124,13 @@ int main (int, char**) {
 	}
 	catch (...) { }
 
+	try { // MQTTDataModule
+		log.error(string(MODULES_DIR)+string(MOD_MQTT_DATA)+".ini");
+		cfg_mqtt_data_module = new IniFileConfiguration(string(MODULES_DIR)+string(MOD_MQTT_DATA)+".ini");
+		mod_mqtt_data_module = cfg_mqtt_data_module->getBool(string(MOD_MQTT_DATA)+".enabled", false);
+	}
+	catch (...) { }
+
 	try {
 		cfg_mqtt = new IniFileConfiguration(string(MODULES_DIR)+string(MOD_MQTT)+".ini");
 		mod_mqtt = cfg_mqtt->getBool(string(MOD_MQTT)+".enabled", false);
@@ -165,6 +174,7 @@ int main (int, char**) {
 	log.information(MOD_VPT_SENSOR      + ":      " +        ((mod_vpt) ? " ON" : "OFF"));
 	log.information(MOD_OPENHAB         + ":         " + ((mod_openhab) ? " ON" : "OFF"));
 	log.information(MOD_JABLOTRON       + ":       " + ((mod_jablotron) ? " ON" : "OFF"));
+	log.information(MOD_MQTT_DATA       + ":" + ((mod_mqtt_data_module) ? " ON" : "OFF"));
 
 	srand(time(0));
 
@@ -202,6 +212,9 @@ int main (int, char**) {
 		shared_ptr<PressureSensor> psm;
 		shared_ptr<VirtualSensorModule> vsm;
 		shared_ptr<JablotronModule> jablotron;
+		shared_ptr<MQTTDataModule> mqtt_data_module;
+
+		std::thread mq_t;
 
 		if (mod_mqtt) {
 			log.information("Starting MQTT module.");
@@ -263,6 +276,12 @@ int main (int, char**) {
 			agg->setJablotronModule(jablotron);
 		}
 
+		if (mod_mqtt_data_module) {
+			log.information("Creating MQTTData module.");
+			mqtt_data_module.reset(new MQTTDataModule(msg, agg));
+			agg->setMQTTDataModule(mqtt_data_module);
+		}
+
 		agg_thread.start(*agg.get());
 		srv_thread.start(*receiver.get());
 
@@ -289,6 +308,11 @@ int main (int, char**) {
 		if (mod_jablotron) {
 			log.information("Starting Jablotron module");
 			jablotron.get()->start();
+		}
+
+		if (mod_mqtt_data_module) {
+			log.information("Starting MQTTData module.");
+			mqtt_data_module->start();
 		}
 
 		/* "Endless" loop waiting for SIGINT/SIGTERM */
@@ -326,6 +350,11 @@ int main (int, char**) {
 		if (mod_mqtt) {
 			log.information("Stopping MQTT...");
 			mqtt_thread.join();
+		}
+
+		if (mod_mqtt_data_module) {
+			log.information("Stopping MQTTDataModule...");
+			mqtt_data_module->stop();
 		}
 
 		log.information("Stopping server...");

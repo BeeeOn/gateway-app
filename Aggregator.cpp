@@ -112,6 +112,20 @@ void Aggregator::sendToPANviaMQTT(std::vector<uint8_t> msg) {
 	}
 }
 
+void Aggregator::sendFromMQTTDataModule(std::string msg, std::string topic)
+{
+	if (dist) {
+		log.debug("Giving message with MQTT data to distributor.");
+		dist->sendMessageToMQTT(msg, topic);
+	}
+}
+
+void Aggregator::sendToMQTTDataModule(string msg)
+{
+	if (m_mqtt_data_module.get() != nullptr)
+		m_mqtt_data_module->msgToMQTTDataModule(msg);
+}
+
 void Aggregator::sendFromPAN(uint8_t type, std::vector<uint8_t> msg) {
 	if (pan.get() != nullptr)
 		pan->msgFromPAN(type, msg);
@@ -273,6 +287,11 @@ void Aggregator::setJablotronModule(shared_ptr<JablotronModule> jablotron)
 	m_jablotron = jablotron;
 }
 
+void Aggregator::setMQTTDataModule(shared_ptr<MQTTDataModule> mqtt_data_module)
+{
+	m_mqtt_data_module = mqtt_data_module;
+}
+
 void Aggregator::parseCmd(Command cmd) {
 	log.information("Agg: parseCmd, Command = " + cmd.state);
 
@@ -290,6 +309,9 @@ void Aggregator::parseCmd(Command cmd) {
 		}
 		if (hab) {
 			hab->cmdFromServer(cmd);
+		}
+		if (m_mqtt_data_module.get() != nullptr) {
+			m_mqtt_data_module->parseCmdFromServer(cmd);
 		}
 	}
 	else if (cmd.state == "getparameters" || cmd.state == "parameters"){
@@ -320,6 +342,11 @@ void Aggregator::parseCmd(Command cmd) {
 		else if (pan.get() != nullptr) {
 			log.information("Sending incoming command to PAN");
 			pan->sendCommandToPAN(cmd);
+		}
+
+		if (m_mqtt_data_module.get() != nullptr) {
+			log.information("Sending incoming command to MQTTDataModule");
+			m_mqtt_data_module->parseCmdFromServer(cmd);
 		}
 	}
 }
