@@ -5,13 +5,17 @@
  * @brief Definition functions for VPTSensor
  */
 
+#include <iomanip>
+
 #include <cassert>
 
 #include <Poco/DateTimeFormatter.h>
+#include <Poco/DateTimeParser.h>
 #include <Poco/DigestStream.h>
 #include <Poco/RegularExpression.h>
 #include <Poco/SHA1Engine.h>
 #include <Poco/Thread.h>
+#include <Poco/Timezone.h>
 
 #include "main.h"
 #include "VPT.h"
@@ -38,11 +42,12 @@ using Poco::Util::IniFileConfiguration;
 #define SUB_MAC_START 6
 #define SUB_MAC_LENGTH 6
 
-const string ACTION_PAIR = "P";
-const string ACTION_READ = "R";
-const string ACTION_SET = "S";
-
-const unsigned int ACTION_LENGTH = 1;
+enum ACTION {
+	PAIR = 0x01,
+	READ,
+	SET,
+	LAST, //do not use as type of action
+};
 
 const string URL_PASSWORD_KEY = "&__HOSTPWD=";
 
@@ -61,27 +66,38 @@ static const string vpt_ini_file(void)
 	return string(MODULES_DIR) + string(MOD_VPT_SENSOR) + ".ini";
 }
 
-static string getTimeZone() {
-	Poco::DateTime time;
-	string zone = Poco::DateTimeFormatter::format(time, "%z");
-	if (zone == "Z") {
-		zone = "00";
-	}
-	if (zone.length() > 2) {
-		zone = zone.substr(0, 2);
-	}
-	return zone;
+static string getTimeZoneWithAction(const int action)
+{
+	stringstream stream;
+	string result;
+	int32_t zone_action = ((int32_t) Timezone::tzd() << 2) | action;
+
+	stream << hex << uppercase << setfill('0') << setw(2) << zone_action;
+
+	result = stream.str();
+
+	return result.substr(result.length()-2); //Get last byte
 }
 
-static string generateBeeeonTimestamp(const string &adapter_id,
-		const string &ip_address,
-		const string &action)
+static string generateBeeeonTimestamp(long long int adapter_id,
+		uint32_t ip_address,
+		const int action)
 {
-	Poco::DateTime time;
-	return ip_address + "/" + adapter_id + ":" +
-		Poco::DateTimeFormatter::format(time, "%d.%m.%Y+") +
-		getTimeZone() +
-		Poco::DateTimeFormatter::format(time, " %H:%M:%S") + action;
+	stringstream stream;
+	string result;
+
+	uint32_t time = (uint32_t) Timestamp().epochTime();
+
+	//Format: 4B - IP, 7B - ADAPTER IP, 4B - TIME, 1B - ZONE AND ACTION
+	//Hex: 8 + 14 + 8 + 2 = 32 characters
+	stream << hex << uppercase << setfill('0') <<
+			setw(8) << ip_address <<
+			setw(14) << adapter_id <<
+			setw(8) << time;
+
+	result = stream.str() + getTimeZoneWithAction(action);
+
+	return result;
 }
 
 static string extractRandomNumber(const string & content) {
@@ -109,7 +125,7 @@ static string generateSHAHash(const string & password, const string & rand_numbe
 }
 
 VPTSensor::VPTSensor(IOTMessage _msg, shared_ptr<Aggregator> _agg, long long int _adapter_id) :
-	adapter_id(to_string(_adapter_id)),
+	adapter_id(_adapter_id),
 	agg(_agg),
 	log(Poco::Logger::get("Adaapp-VPT")),
 	msg(_msg)
@@ -168,7 +184,7 @@ void VPTSensor::fetchAndSendMessage(map<euid_t, VPTDevice>::iterator &device)
 			if (response.first) {
 				parseCmdFromServer(response.second);
 			}
-			updateTimestampOnVPT(device->second, ACTION_READ);
+			updateTimestampOnVPT(device->second, ACTION::READ);
 
 			if (!device->second.paired)
 				device->second.active -= device->second.wake_up_time;
@@ -405,14 +421,14 @@ void VPTSensor::processCmdSet(Command cmd)
 	}
 
 	if (sendSetRequest(dev, url_value))
-		updateTimestampOnVPT(dev, ACTION_SET);
+		updateTimestampOnVPT(dev, ACTION::SET);
 
 }
 
-void VPTSensor::updateTimestampOnVPT(VPTDevice &dev, const std::string &action) {
+void VPTSensor::updateTimestampOnVPT(VPTDevice &dev, const int action) {
 	string request = "/values.json?BEEE0=";
 
-	if (action.length() != ACTION_LENGTH) {
+	if (action <= 0 || action >= ACTION::LAST) {
 		log.warning("VPT: Generate timestamp with bad action code");
 		return;
 	}
@@ -574,7 +590,7 @@ void VPTSensor::pairDevices(void) {
 	for(auto device = map_devices.begin(); device != map_devices.end(); device++) {
 		try {
 			json->loadDeviceConfiguration(device->second.name, device->second.page_version);
-			updateTimestampOnVPT(device->second, ACTION_PAIR);
+			updateTimestampOnVPT(device->second, ACTION::PAIR);
 		}
 		catch (Poco::Exception &e) {
 

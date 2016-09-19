@@ -36,7 +36,7 @@ public:
 
 	std::vector<std::string> discoverDevices();
 
-	std::string findAdapterIP(std::string ip_address);
+	uint32_t findAdapterIP(std::string ip_address);
 
 	std::string sendRequest(std::string ip, std::string url = "/values.json");
 
