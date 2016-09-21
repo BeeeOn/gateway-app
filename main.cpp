@@ -45,6 +45,7 @@ int main (int, char**) {
 	bool mod_mqtt = false;
 	bool mod_vpt = false;
 	bool mod_openhab = false;
+	bool mod_jablotron = false;
 
 	AutoPtr<IniFileConfiguration> cfg;
 	AutoPtr<IniFileConfiguration> cfg_logging;
@@ -54,6 +55,7 @@ int main (int, char**) {
 	AutoPtr<IniFileConfiguration> cfg_vpt;
 	AutoPtr<IniFileConfiguration> cfg_mqtt;
 	AutoPtr<IniFileConfiguration> cfg_hab;
+	AutoPtr<IniFileConfiguration> cfg_jablotron;
 
 	Poco::Thread agg_thread("Aggregator");
 	Poco::Thread mqtt_thread("MosquittoClient");
@@ -61,6 +63,7 @@ int main (int, char**) {
 	Poco::Thread srv_thread("TCP");
 	Poco::Thread vpt_thread("VPT");
 	Poco::Thread hab_thread("HAB");
+	Poco::Thread jablotron_thread("Jablotron");
 
 	Logger& log = Poco::Logger::get("Adaapp-MAIN"); // get logging utility
 
@@ -125,6 +128,12 @@ int main (int, char**) {
 	}
 	catch (...) { }
 
+	try {
+		cfg_jablotron = new IniFileConfiguration(string(MODULES_DIR)+string(MOD_JABLOTRON)+".ini");
+		mod_jablotron = cfg_jablotron->getBool(string(MOD_JABLOTRON)+".enabled", false);
+	}
+	catch (...) { }
+
 #ifndef PC_PLATFORM
 	EEPROM_ITEMS eeprom = parseEEPROM();
 
@@ -155,6 +164,7 @@ int main (int, char**) {
 	log.information(MOD_MQTT            + ":            " + ((mod_mqtt) ? " ON" : "OFF"));
 	log.information(MOD_VPT_SENSOR      + ":      " +        ((mod_vpt) ? " ON" : "OFF"));
 	log.information(MOD_OPENHAB         + ":         " + ((mod_openhab) ? " ON" : "OFF"));
+	log.information(MOD_JABLOTRON       + ":       " + ((mod_jablotron) ? " ON" : "OFF"));
 
 	srand(time(0));
 
@@ -191,6 +201,7 @@ int main (int, char**) {
 		shared_ptr<OpenHAB> hab;
 		shared_ptr<PressureSensor> psm;
 		shared_ptr<VirtualSensorModule> vsm;
+		shared_ptr<JablotronModule> jablotron;
 
 		if (mod_mqtt) {
 			log.information("Starting MQTT module.");
@@ -246,6 +257,12 @@ int main (int, char**) {
 			agg->setVSM(vsm);
 		}
 
+		if (mod_jablotron) {
+			log.information("Creating Jablotron module");
+			jablotron.reset(new JablotronModule(msg, agg));
+			agg->setJablotronModule(jablotron);
+		}
+
 		agg_thread.start(*agg.get());
 		srv_thread.start(*receiver.get());
 
@@ -269,6 +286,11 @@ int main (int, char**) {
 			vsm_thread.start(*vsm.get());
 		}
 
+		if (mod_jablotron) {
+			log.information("Starting Jablotron module");
+			jablotron.get()->start();
+		}
+
 		/* "Endless" loop waiting for SIGINT/SIGTERM */
 		while (!quit_global_flag) {
 			sleep(1);
@@ -279,6 +301,11 @@ int main (int, char**) {
 		if (mod_virtual_sensor) {
 			log.information("Stopping Virtual Sensor module...");
 			vsm_thread.join();
+		}
+
+		if (mod_jablotron) {
+			log.information("Stopping Jablotron Module ...");
+			jablotron_thread.join();
 		}
 
 		if (mod_pressure_sensor) {

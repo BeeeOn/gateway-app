@@ -268,6 +268,11 @@ void Aggregator::setHAB(shared_ptr<OpenHAB> _hab) {
 	hab = _hab;
 }
 
+void Aggregator::setJablotronModule(shared_ptr<JablotronModule> jablotron)
+{
+	m_jablotron = jablotron;
+}
+
 void Aggregator::parseCmd(Command cmd) {
 	log.information("Agg: parseCmd, Command = " + cmd.state);
 
@@ -303,6 +308,10 @@ void Aggregator::parseCmd(Command cmd) {
 		else if (vpt && vpt->isVPTSensor(cmd.euid)) {
 			log.information("Sending incoming command to VPT");
 			vpt->parseCmdFromServer(cmd);
+		}
+		else if (m_jablotron && m_jablotron->isJablotronModule(cmd.euid)) {
+			log.information("Sending incoming command to Jablotron");
+			m_jablotron->parseCmdFromServer(cmd);
 		}
 		else if (hab) {
 			log.information("Sending incoming command to HAB");

@@ -37,6 +37,7 @@ extern bool quit_global_flag;
 #include "VPT.h"
 #include "XMLTool.h"
 #include "TCP.h"
+#include "JablotronModule.h"
 
 struct Cache_Key {
 
@@ -122,6 +123,7 @@ public:
 	void setVPT(std::shared_ptr<VPTSensor> _vpt);
 	void setHAB(std::shared_ptr<OpenHAB> _hab);
 	void setTCP(std::shared_ptr<IOTReceiver> _tcp);
+	void setJablotronModule(std::shared_ptr<JablotronModule> jablotron);
 	void storeCache();
 	void loadCache(void);
 	void parseCmd(Command cmd);
@@ -150,6 +152,7 @@ private:
 	std::shared_ptr<OpenHAB> hab;
 	std::shared_ptr<IOTReceiver> tcp;
 	std::shared_ptr<Parameters> param;
+	std::shared_ptr<JablotronModule> m_jablotron;
 
 	std::thread button_t;
 

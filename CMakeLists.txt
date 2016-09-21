@@ -69,12 +69,14 @@ set (ADAAPP_SOURCES
 	Distributor.cpp
 	IOcontrol.cpp
 	JSON.cpp HTTP.cpp
+	JablotronModule.cpp
 	ModuleADT.cpp
 	MosqClient.cpp
 	Openhab.cpp VPT.cpp
 	PanInterface.cpp
 	Parameters.cpp
 	PressureSensor.cpp
+	SerialControl.cpp
 	TCP.cpp Aggregator.cpp
 	VirtualSensor.cpp
 	VirtualSensorModule.cpp
