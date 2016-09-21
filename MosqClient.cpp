@@ -178,3 +178,15 @@ void MosqClient::askTheServer(string msg_text){
 		log.error("askTheServer | Missing agg");
 	}
 }
+
+void MosqClient::run()
+{
+	while (!quit_global_flag) {
+		int rc = loop();
+		if (rc != MOSQ_ERR_SUCCESS) {
+			log.debug("Trying to reconnect");
+			reconnect();
+			usleep(500000);
+		}
+	}
+}
