@@ -27,6 +27,7 @@ extern bool quit_global_flag;
 #include <Poco/StringTokenizer.h>
 #include <Poco/Util/IniFileConfiguration.h>
 
+#include "MQTTDataModule.h"
 #include "Distributor.h"
 #include "MosqClient.h"
 #include "Openhab.h"
@@ -124,6 +125,8 @@ public:
 	void setHAB(std::shared_ptr<OpenHAB> _hab);
 	void setTCP(std::shared_ptr<IOTReceiver> _tcp);
 	void setJablotronModule(std::shared_ptr<JablotronModule> jablotron);
+	void setMQTTDataModule(std::shared_ptr<MQTTDataModule> mqtt_data_module);
+
 	void storeCache();
 	void loadCache(void);
 	void parseCmd(Command cmd);
@@ -131,6 +134,8 @@ public:
 	static void buttonCallback(int event_type);
 
 	void sendToPANviaMQTT(std::vector<uint8_t> msg);
+	void sendFromMQTTDataModule(std::string msg, std::string topic);
+	void sendToMQTTDataModule(std::string msg);
 	void sendFromPAN(uint8_t type, std::vector<uint8_t> msg);
 	float convertValue(TT_Module type, float old_val, bool reverse=false);
 
@@ -153,6 +158,7 @@ private:
 	std::shared_ptr<IOTReceiver> tcp;
 	std::shared_ptr<Parameters> param;
 	std::shared_ptr<JablotronModule> m_jablotron;
+	std::shared_ptr<MQTTDataModule> m_mqtt_data_module;
 
 	std::thread button_t;
 

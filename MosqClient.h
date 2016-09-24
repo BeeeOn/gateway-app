@@ -54,6 +54,7 @@ public:
 
 	void setAgg(Aggregator* agg_);
 	void newMessageFromPAN(std::string msg);
+	void newMessageToMQTTDataModule(std::string msg);
 
 	/**
 	 * Send message to default topic (specified in constructor).

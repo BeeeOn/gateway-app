@@ -7,6 +7,7 @@
 
 #include <cstdbool>
 
+#include "MQTTDataModule.h"
 #include "MosqClient.h"
 
 using namespace std;
@@ -78,6 +79,14 @@ void MosqClient::newMessageFromPAN(std::string msg) {
 		agg->sendFromPAN(type, vec);
 }
 
+void MosqClient::newMessageToMQTTDataModule(std::string msg)
+{
+	if (agg)
+		agg->sendToMQTTDataModule(msg);
+	else
+		log.error("missing aggregator ", __FILE__, __LINE__);
+}
+
 MosqClient::~MosqClient() {
 	disconnect();
 	mosqpp::lib_cleanup();    // Mosquitto library cleanup
@@ -137,6 +146,10 @@ void MosqClient::on_message (const struct mosquitto_message *message) {
 	}
 	if (msg_topic.compare("BeeeOn/param") == 0) {
 		askTheServer(msg_text);
+	}
+
+	if (msg_topic.compare(MQTT_DATA_MODULE_TO_ADAAPP) == 0) {
+		newMessageToMQTTDataModule(msg_text);
 	}
 }
 
