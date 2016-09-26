@@ -335,13 +335,17 @@ void Aggregator::parseCmd(Command cmd) {
 			log.information("Sending incoming command to Jablotron");
 			m_jablotron->parseCmdFromServer(cmd);
 		}
-		else if (hab) {
-			log.information("Sending incoming command to HAB");
-			hab->cmdFromServer(cmd);
-		}
-		else if (pan.get() != nullptr) {
-			log.information("Sending incoming command to PAN");
-			pan->sendCommandToPAN(cmd);
+		else {
+			// send this to all these modules, because they lack
+			// mechanism to determine if message belongs to them
+			if (hab) {
+				log.information("Sending incoming command to HAB");
+				hab->cmdFromServer(cmd);
+			}
+			if (pan.get() != nullptr) {
+				log.information("Sending incoming command to PAN");
+				pan->sendCommandToPAN(cmd);
+			}
 		}
 
 		if (m_mqtt_data_module.get() != nullptr) {
