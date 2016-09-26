@@ -51,10 +51,6 @@ string XMLTool::createXML(int type) {
 		attrs.addAttribute("", "", "protocol_version", "", msg.protocol_version);
 		attrs.addAttribute("", "", "fw_version", "", msg.fw_version);
 		attrs.addAttribute("", "", "time", "", toStringFromLongInt(msg.time));
-		if (type == INIT) {
-			// TODO attrs.addAttribute("", "", "adapter_id", "", msg.adapter_id);
-			// TODO send even if I don't have it yet? attrs.addAttribute("", "", "tt_version", "", toStringFromLongInt(msg.tt_version));
-		}
 		writer.startElement("", "adapter_server", "", attrs);
 
 		if (type == A_TO_S) {
