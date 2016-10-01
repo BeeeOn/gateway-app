@@ -282,6 +282,11 @@ void Aggregator::setHAB(shared_ptr<OpenHAB> _hab) {
 	hab = _hab;
 }
 
+void Aggregator::setBluetooth(shared_ptr<Bluetooth> bluetooth)
+{
+	m_bluetooth = bluetooth;
+}
+
 void Aggregator::setJablotronModule(shared_ptr<JablotronModule> jablotron)
 {
 	m_jablotron = jablotron;
@@ -352,6 +357,10 @@ void Aggregator::parseCmd(Command cmd) {
 			log.information("Sending incoming command to MQTTDataModule");
 			m_mqtt_data_module->parseCmdFromServer(cmd);
 		}
+	}
+	if (m_bluetooth) {
+		log.information("Sending incoming command to Bluetooth");
+		m_bluetooth->parseCmdFromServer(cmd);
 	}
 }
 

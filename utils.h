@@ -76,6 +76,7 @@
 #define MOD_PARAM			(std::string)"parameters"
 #define MOD_JABLOTRON       (std::string)"jablotron"
 #define MOD_MQTT_DATA       (std::string)"mqtt_data"
+#define MOD_BLUETOOTH       (std::string)"bluetooth"
 
 #define DEFAULT_LOG_FORMAT	(std::string)"[%Y-%m-%d %H:%M:%S, %q%q, %s, %T] %t"
 
@@ -156,6 +157,12 @@ typedef uint64_t euid_t;
 #define EUID_PREFIX_MASK EUID_PREFIX_MASK32
 #define EUID_PREFIX_MASK32 0xFF000000
 #define EUID_PREFIX_MASK64 0xFFFF000000000000
+#define MAC_MASK 0x0000FFFFFFFFFFFF
+
+inline bool isEven(unsigned int n)
+{
+	return (n % 2 == 0);
+}
 
 inline long long int toNumFromString(std::string num) {
 	try {
@@ -194,6 +201,10 @@ inline std::string toStringFromLongInt(long long int num) {
 
 inline std::string toStringFromLongHex (long long int num, int width=6) {
 	return (static_cast<std::ostringstream*>( &(std::ostringstream() << "0x" << std::internal << std::setfill('0') << std::setw(width) << std::hex << num) )->str());
+}
+
+inline std::string toHexString (euid_t num, const std::string &prefix = "0x", int width=12) {
+	return (static_cast<std::ostringstream*>( &(std::ostringstream() << prefix << std::internal << std::setfill('0') << std::setw(width) << std::hex << num) )->str());
 }
 
 inline std::string toStringFromFloat (float num) {

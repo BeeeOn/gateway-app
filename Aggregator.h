@@ -27,6 +27,7 @@ extern bool quit_global_flag;
 #include <Poco/StringTokenizer.h>
 #include <Poco/Util/IniFileConfiguration.h>
 
+#include "Bluetooth.h"
 #include "MQTTDataModule.h"
 #include "Distributor.h"
 #include "MosqClient.h"
@@ -82,6 +83,7 @@ class VirtualSensorModule;
 class Distributor;
 class IOTReceiver;
 class Parameters;
+class Bluetooth;
 
 /**
  * Class to watch invalid time. If there is no valid time, messages are not sent to the server and offset to blackout is computed. Correct time is computed after restoration of time.
@@ -126,6 +128,7 @@ public:
 	void setTCP(std::shared_ptr<IOTReceiver> _tcp);
 	void setJablotronModule(std::shared_ptr<JablotronModule> jablotron);
 	void setMQTTDataModule(std::shared_ptr<MQTTDataModule> mqtt_data_module);
+	void setBluetooth(std::shared_ptr<Bluetooth> bluetooth);
 
 	void storeCache();
 	void loadCache(void);
@@ -159,6 +162,7 @@ private:
 	std::shared_ptr<Parameters> param;
 	std::shared_ptr<JablotronModule> m_jablotron;
 	std::shared_ptr<MQTTDataModule> m_mqtt_data_module;
+	std::shared_ptr<Bluetooth> m_bluetooth;
 
 	std::thread button_t;
 

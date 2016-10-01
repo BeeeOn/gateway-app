@@ -47,6 +47,7 @@ int main (int, char**) {
 	bool mod_openhab = false;
 	bool mod_jablotron = false;
 	bool mod_mqtt_data_module = false;
+	bool mod_bluetooth = false;
 
 	AutoPtr<IniFileConfiguration> cfg;
 	AutoPtr<IniFileConfiguration> cfg_logging;
@@ -58,6 +59,7 @@ int main (int, char**) {
 	AutoPtr<IniFileConfiguration> cfg_hab;
 	AutoPtr<IniFileConfiguration> cfg_jablotron;
 	AutoPtr<IniFileConfiguration> cfg_mqtt_data_module;
+	AutoPtr<IniFileConfiguration> cfg_bluetooth;
 
 	Poco::Thread agg_thread("Aggregator");
 	Poco::Thread mqtt_thread("MosquittoClient");
@@ -143,6 +145,12 @@ int main (int, char**) {
 	}
 	catch (...) { }
 
+	try {
+		cfg_bluetooth = new IniFileConfiguration(string(MODULES_DIR)+string(MOD_BLUETOOTH)+".ini");
+		mod_bluetooth = cfg_bluetooth->getBool(string(MOD_BLUETOOTH)+".enabled", false);
+	}
+	catch (...) { }
+
 #ifndef PC_PLATFORM
 	EEPROM_ITEMS eeprom = parseEEPROM();
 
@@ -175,6 +183,7 @@ int main (int, char**) {
 	log.information(MOD_OPENHAB         + ":         " + ((mod_openhab) ? " ON" : "OFF"));
 	log.information(MOD_JABLOTRON       + ":       " + ((mod_jablotron) ? " ON" : "OFF"));
 	log.information(MOD_MQTT_DATA       + ":" + ((mod_mqtt_data_module) ? " ON" : "OFF"));
+	log.information(MOD_BLUETOOTH       + ":       " + ((mod_bluetooth) ? " ON" : "OFF"));
 
 	srand(time(0));
 
@@ -213,6 +222,7 @@ int main (int, char**) {
 		shared_ptr<VirtualSensorModule> vsm;
 		shared_ptr<JablotronModule> jablotron;
 		shared_ptr<MQTTDataModule> mqtt_data_module;
+		shared_ptr<Bluetooth> bluetooth;
 
 		std::thread mq_t;
 
@@ -282,6 +292,12 @@ int main (int, char**) {
 			agg->setMQTTDataModule(mqtt_data_module);
 		}
 
+		if (mod_bluetooth) {
+			log.information("Creating Bluetooth module.");
+			bluetooth.reset(new Bluetooth(msg, agg));
+			agg->setBluetooth(bluetooth);
+		}
+
 		agg_thread.start(*agg.get());
 		srv_thread.start(*receiver.get());
 
@@ -313,6 +329,11 @@ int main (int, char**) {
 		if (mod_mqtt_data_module) {
 			log.information("Starting MQTTData module.");
 			mqtt_data_module->start();
+		}
+
+		if (mod_bluetooth) {
+			log.information("Starting Bluetooth module.");
+			bluetooth.get()->start();
 		}
 
 		/* "Endless" loop waiting for SIGINT/SIGTERM */
@@ -355,6 +376,11 @@ int main (int, char**) {
 		if (mod_mqtt_data_module) {
 			log.information("Stopping MQTTDataModule...");
 			mqtt_data_module->stop();
+		}
+
+		if (mod_bluetooth) {
+			log.information("Stopping Bluetooth module...");
+			bluetooth.get()->stop();
 		}
 
 		log.information("Stopping server...");

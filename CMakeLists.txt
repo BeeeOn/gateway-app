@@ -66,6 +66,7 @@ check_cxx_function_exists(std::stoull ${CXX_FUNCTION_FAMILY_TO_NUMBER} HAVE_CXX_
 check_cxx_function_exists(std::stof ${CXX_FUNCTION_FAMILY_TO_NUMBER} HAVE_CXX_STOF)
 
 set (ADAAPP_SOURCES
+	Bluetooth.cpp
 	Distributor.cpp
 	IOcontrol.cpp
 	JSON.cpp HTTP.cpp
