@@ -409,7 +409,7 @@ void VPTSensor::processCmdSet(Command cmd)
 	pair<int, float> value = cmd.values.at(0);
 	log.information("VPT: " + dev.ip + ": Set actuator with ID:" + to_string(value.first) + " on " + to_string((int)value.second));
 
-	string url_value = json->generateRequestURL(dev.name, value.first, value.second);
+	string url_value = json->generateRequestURL(dev.specification, value.first, value.second);
 	if (url_value.empty()) {
 		log.error("VPT: Setting actuator failed - device or actuator not found");
 		return;

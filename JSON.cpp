@@ -75,6 +75,7 @@ bool JSONDevices::isJSONFormat(std::string content)
 std::string JSONDevices::generateRequestURL(string device_name, int id, float value)
 {
 	string request_url = "";
+	log.information("Generate request for device specification: " + device_name);
 	std::map<std::string,json_device>::iterator it = devices.find(device_name);
 
 	if (it == devices.end())
