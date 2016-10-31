@@ -29,7 +29,7 @@ IOTMessage MQTTDataParser::parseMessage(const string& data) const
 		parsedJson = parseJsonObject(data);
 
 		message.state = extractString(parsedJson, "state");
-		device.device_id = toIntFromString(extractString(parsedJson, "deviceID"));
+		device.device_id = toIntFromString(extractString(parsedJson, "device_id"));
 		device.euid = toIntFromString(extractString(parsedJson, "euid"));
 
 		Array::Ptr dataArray = parsedJson->getArray("data");
@@ -37,7 +37,7 @@ IOTMessage MQTTDataParser::parseMessage(const string& data) const
 		for (size_t i = 0; i < dataArray->size(); ++i) {
 			Object::Ptr item = dataArray->getObject(i);
 			string value = extractString(item, "value");
-			string moduleID = extractString(item, "moduleID");
+			string moduleID = extractString(item, "module_id");
 			device.values.push_back({signed(Poco::NumberParser::parseHex(moduleID)),
 				toFloatFromString(value)});
 		}

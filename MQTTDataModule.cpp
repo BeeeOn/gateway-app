@@ -116,14 +116,14 @@ string MQTTDataModule::createSetActuatorsMessage(const Command& cmd) const
 	Poco::JSON::Array arrayPtr;
 
 	jsonMsg.set("state", "set");
-	jsonMsg.set("deviceID", std::to_string(cmd.device_id));
+	jsonMsg.set("device_id", std::to_string(cmd.device_id));
 	jsonMsg.set("euid", std::to_string(cmd.euid));
 
 	size_t i = 0;
 	for (auto item : cmd.values) {
 		data = new Poco::JSON::Object();
 
-		data->set("moduleID", to_string(item.first));
+		data->set("module_id", to_string(item.first));
 		data->set("value", to_string(item.second));
 
 		arrayPtr.set(i++, data);
