@@ -23,6 +23,7 @@
 #include <Poco/Util/IniFileConfiguration.h>
 
 #include "Aggregator.h"
+#include "Bluetooth.h"
 #include "IOcontrol.h"
 #include "MosqClient.h"
 #include "Openhab.h"
