@@ -153,7 +153,9 @@ enum MSG_PRIO {
 typedef uint64_t euid_t;
 
 #define EUID_MASK 0x00FFFFFF
-#define EUID_PREFIX_MASK 0xFF000000
+#define EUID_PREFIX_MASK EUID_PREFIX_MASK32
+#define EUID_PREFIX_MASK32 0xFF000000
+#define EUID_PREFIX_MASK64 0xFFFF000000000000
 
 inline long long int toNumFromString(std::string num) {
 	try {
