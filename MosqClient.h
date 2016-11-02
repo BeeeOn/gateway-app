@@ -80,8 +80,6 @@ public:
 	 */
 	bool add_topic_to_subscribe(std::string topic);
 
-	void newMsgFromHAB(std::string msg_text);
-
 	void askTheServer(std::string msg_text);
 };
 

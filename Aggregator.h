@@ -31,7 +31,6 @@ extern bool quit_global_flag;
 #include "MQTTDataModule.h"
 #include "Distributor.h"
 #include "MosqClient.h"
-#include "Openhab.h"
 #include "Parameters.h"
 #include "PressureSensor.h"
 #include "utils.h"
@@ -124,7 +123,6 @@ public:
 	void setPSM(std::shared_ptr<PressureSensor> _psm);
 	void setPAN(std::shared_ptr<PanInterface> _pan);
 	void setVPT(std::shared_ptr<VPTSensor> _vpt);
-	void setHAB(std::shared_ptr<OpenHAB> _hab);
 	void setTCP(std::shared_ptr<IOTReceiver> _tcp);
 	void setJablotronModule(std::shared_ptr<JablotronModule> jablotron);
 	void setMQTTDataModule(std::shared_ptr<MQTTDataModule> mqtt_data_module);
@@ -143,8 +141,6 @@ public:
 	float convertValue(TT_Module type, float old_val, bool reverse=false);
 
 	void setAgg(std::shared_ptr<Aggregator> _agg);
-	void sendHABtoServer(std::string msg_text);
-	void sendToMQTT(std::string msg_text, std::string topic);
 	CmdParam sendParam(CmdParam param);
 
 private:
@@ -157,7 +153,6 @@ private:
 	std::shared_ptr<VirtualSensorModule> vsm;
 	std::shared_ptr<PanInterface> pan;
 	std::shared_ptr<VPTSensor> vpt;
-	std::shared_ptr<OpenHAB> hab;
 	std::shared_ptr<IOTReceiver> tcp;
 	std::shared_ptr<Parameters> param;
 	std::shared_ptr<JablotronModule> m_jablotron;

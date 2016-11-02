@@ -278,10 +278,6 @@ void Aggregator::setTCP(shared_ptr<IOTReceiver> _tcp) {
 	tcp = _tcp;
 }
 
-void Aggregator::setHAB(shared_ptr<OpenHAB> _hab) {
-	hab = _hab;
-}
-
 void Aggregator::setBluetooth(shared_ptr<Bluetooth> bluetooth)
 {
 	m_bluetooth = bluetooth;
@@ -312,9 +308,6 @@ void Aggregator::parseCmd(Command cmd) {
 		if (vpt) {
 			vpt->parseCmdFromServer(cmd);
 		}
-		if (hab) {
-			hab->cmdFromServer(cmd);
-		}
 		if (m_mqtt_data_module.get() != nullptr) {
 			m_mqtt_data_module->parseCmdFromServer(cmd);
 		}
@@ -343,10 +336,6 @@ void Aggregator::parseCmd(Command cmd) {
 		else {
 			// send this to all these modules, because they lack
 			// mechanism to determine if message belongs to them
-			if (hab) {
-				log.information("Sending incoming command to HAB");
-				hab->cmdFromServer(cmd);
-			}
 			if (pan.get() != nullptr) {
 				log.information("Sending incoming command to PAN");
 				pan->sendCommandToPAN(cmd);
@@ -591,26 +580,6 @@ float Aggregator::convertValue(TT_Module type, float old_val, bool reverse) {
 		}
 	}
 	return new_val;
-}
-
-void Aggregator::sendHABtoServer(std::string msg_text){
-	if (hab) {
-		IOTMessage msg = hab->msgFromMqtt(msg_text);
-		if(msg.time != 0)
-			sendData(msg);
-	} else {
-		log.information("New message on MQTT from OpenHAB, but module in NOT enabled.");
-	}
-}
-
-/**
- * Forwarding message from modul Openhab to MosqClient
- * @param msq_text Message content
- * @param topic Name of topic on MQTT
- */
-void Aggregator::sendToMQTT(std::string msg_text, std::string topic){
-	log.information("Agg: OH: msg from server to MQTT");
-	mq->send_message(msg_text,topic,0);
 }
 
 CmdParam Aggregator::sendParam(CmdParam par){

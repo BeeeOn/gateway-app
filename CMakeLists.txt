@@ -75,7 +75,7 @@ set (ADAAPP_SOURCES
 	MQTTDataParser.cpp
 	ModuleADT.cpp
 	MosqClient.cpp
-	Openhab.cpp VPT.cpp
+	VPT.cpp
 	PanInterface.cpp
 	Parameters.cpp
 	PressureSensor.cpp

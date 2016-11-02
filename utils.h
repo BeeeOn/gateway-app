@@ -70,7 +70,6 @@
 #define MOD_PRESSURE_SENSOR (std::string)"pressure_sensor"
 #define MOD_VPT_SENSOR      (std::string)"vpt_sensor"
 #define MOD_MQTT            (std::string)"mqtt"
-#define MOD_OPENHAB         (std::string)"openhab"
 #define MOD_TCP         	(std::string)"tcp"
 #define MOD_JSON         	(std::string)"json"
 #define MOD_PARAM			(std::string)"parameters"
