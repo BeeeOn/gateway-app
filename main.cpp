@@ -44,7 +44,6 @@ int main (int, char**) {
 	bool mod_pressure_sensor = false;
 	bool mod_mqtt = false;
 	bool mod_vpt = false;
-	bool mod_openhab = false;
 	bool mod_jablotron = false;
 	bool mod_mqtt_data_module = false;
 	bool mod_bluetooth = false;
@@ -56,7 +55,6 @@ int main (int, char**) {
 	AutoPtr<IniFileConfiguration> cfg_pressure_sensor;
 	AutoPtr<IniFileConfiguration> cfg_vpt;
 	AutoPtr<IniFileConfiguration> cfg_mqtt;
-	AutoPtr<IniFileConfiguration> cfg_hab;
 	AutoPtr<IniFileConfiguration> cfg_jablotron;
 	AutoPtr<IniFileConfiguration> cfg_mqtt_data_module;
 	AutoPtr<IniFileConfiguration> cfg_bluetooth;
@@ -66,7 +64,6 @@ int main (int, char**) {
 	Poco::Thread vsm_thread("VSM");
 	Poco::Thread srv_thread("TCP");
 	Poco::Thread vpt_thread("VPT");
-	Poco::Thread hab_thread("HAB");
 	Poco::Thread jablotron_thread("Jablotron");
 
 	Logger& log = Poco::Logger::get("Adaapp-MAIN"); // get logging utility
@@ -117,12 +114,6 @@ int main (int, char**) {
 	try {
 		cfg_vpt = new IniFileConfiguration(string(MODULES_DIR)+string(MOD_VPT_SENSOR)+".ini");
 		mod_vpt = cfg_vpt->getBool(string(MOD_VPT_SENSOR)+".enabled", false);
-	}
-	catch (...) { }
-
-	try { // OpenHAB
-		cfg_hab = new IniFileConfiguration(string(MODULES_DIR)+string(MOD_OPENHAB)+".ini");
-		mod_openhab = cfg_hab->getBool(string(MOD_OPENHAB)+".enabled", false);
 	}
 	catch (...) { }
 
@@ -180,7 +171,6 @@ int main (int, char**) {
 	log.information(MOD_VIRTUAL_SENSOR  + ":  " + ((mod_virtual_sensor) ? " ON" : "OFF"));
 	log.information(MOD_MQTT            + ":            " + ((mod_mqtt) ? " ON" : "OFF"));
 	log.information(MOD_VPT_SENSOR      + ":      " +        ((mod_vpt) ? " ON" : "OFF"));
-	log.information(MOD_OPENHAB         + ":         " + ((mod_openhab) ? " ON" : "OFF"));
 	log.information(MOD_JABLOTRON       + ":       " + ((mod_jablotron) ? " ON" : "OFF"));
 	log.information(MOD_MQTT_DATA       + ":" + ((mod_mqtt_data_module) ? " ON" : "OFF"));
 	log.information(MOD_BLUETOOTH       + ":       " + ((mod_bluetooth) ? " ON" : "OFF"));
@@ -217,7 +207,6 @@ int main (int, char**) {
 		shared_ptr<MosqClient> mosq;
 		shared_ptr<PanInterface> pan;
 		shared_ptr<VPTSensor> vptsensor;
-		shared_ptr<OpenHAB> hab;
 		shared_ptr<PressureSensor> psm;
 		shared_ptr<VirtualSensorModule> vsm;
 		shared_ptr<JablotronModule> jablotron;
@@ -262,12 +251,6 @@ int main (int, char**) {
 			agg->setVPT(vptsensor);
 		}
 
-		if (mod_openhab && mod_mqtt) {
-			log.information("Creating OpenHAB module.");
-			hab.reset(new OpenHAB(msg, agg));
-			agg->setHAB(hab);
-		}
-
 		if (mod_pressure_sensor) {
 			log.information("Creating PressureSensors module.");
 			psm.reset(new PressureSensor(msg, agg));
@@ -304,11 +287,6 @@ int main (int, char**) {
 		if (mod_vpt) {
 			log.information("Starting VPT module.");
 			vpt_thread.start(*vptsensor.get());
-		}
-
-		if (mod_openhab && mod_mqtt) {
-			log.information("Starting OpenHAB module.");
-			hab_thread.start(*hab.get());
 		}
 
 		if (mod_pressure_sensor) {
@@ -361,11 +339,6 @@ int main (int, char**) {
 		if (mod_vpt) {
 			log.information("Stopping VPT Sensor module...");
 			vpt_thread.join();
-		}
-
-		if (mod_openhab && mod_mqtt) {
-			log.information("Stopping OpenHAB module...");
-			hab_thread.join();
 		}
 
 		if (mod_mqtt) {

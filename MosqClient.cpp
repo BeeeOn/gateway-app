@@ -141,9 +141,6 @@ void MosqClient::on_message (const struct mosquitto_message *message) {
 			send_message("YesIAm","BeeeOn/kodivis", 0);
 		}
 	}
-	if (msg_topic.compare("BeeeOn/openhab") == 0) {
-		newMsgFromHAB(msg_text);
-	}
 	if (msg_topic.compare("BeeeOn/param") == 0) {
 		askTheServer(msg_text);
 	}
@@ -161,16 +158,6 @@ bool MosqClient::add_topic_to_subscribe (std::string topic_) {
 	log.information("Adding new topic to subscribe:\"" + topic_ + "\"");
 	int ret = subscribe(NULL, topic_.c_str());
 	return ( ret == MOSQ_ERR_SUCCESS );
-}
-
-void MosqClient::newMsgFromHAB(std::string msg_text) {
-
-	if(agg){
-		agg->sendHABtoServer(msg_text);
-	}
-	else {
-		log.information("newMsgFromHAB | Missing agg");
-	}
 }
 
 void MosqClient::askTheServer(string msg_text){
