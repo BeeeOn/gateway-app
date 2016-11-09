@@ -274,7 +274,7 @@ void Aggregator::setVSM(shared_ptr<VirtualSensorModule> _vsm) {
 	vsm = _vsm;
 }
 
-void Aggregator::setTCP(shared_ptr<IOTReceiver> _tcp) {
+void Aggregator::setTCP(shared_ptr<ServerConnector> _tcp) {
 	tcp = _tcp;
 }
 
