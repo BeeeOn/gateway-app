@@ -316,6 +316,9 @@ void Aggregator::parseCmd(Command cmd) {
 			m_mqtt_data_module->parseCmdFromServer(cmd);
 		}
 	}
+	else if (cmd.state == "register") {
+		log.information("Gateway registered to server");
+	}
 	else if (cmd.state == "getparameters" || cmd.state == "parameters"){
 		log.information("Incoming GET-PARAMETER command");
 		param->cmdFromServer(cmd);
