@@ -153,6 +153,8 @@ enum MSG_PRIO {
 
 typedef uint64_t euid_t;
 
+typedef uint32_t request_id_t;
+
 #define EUID_MASK 0x00FFFFFF
 #define EUID_PREFIX_MASK EUID_PREFIX_MASK32
 #define EUID_PREFIX_MASK32 0xFF000000
@@ -400,6 +402,23 @@ struct IOTMessage {
 	}
 };
 
+struct ServerMessage {
+	IOTMessage iotmessage;
+	request_id_t request_id;
+	request_id_t response_id;
+
+	ServerMessage() :
+		request_id(0),
+		response_id(0)
+	{}
+
+	ServerMessage(const IOTMessage &msg) :
+		iotmessage(msg),
+		request_id(0),
+		response_id(0)
+	{}
+};
+
 struct Command {
 	std::string protocol_version;	// XML protocol version (adapter<=>server)
 	std::string state;		// Type of message, how to handle it
@@ -428,6 +447,23 @@ struct Command {
 			std::cout << "  module_id:" << toStringFromHex(i.first) << ", value:" << toStringFromFloat(i.second) << std::endl;
 		}
 	}
+};
+
+struct ServerCommand {
+	Command command;
+	request_id_t request_id;
+	request_id_t response_id;
+
+	ServerCommand() :
+		request_id(0),
+		response_id(0)
+	{}
+
+	ServerCommand(const Command &cmd) :
+		command(cmd),
+		request_id(0),
+		response_id(0)
+	{}
 };
 
 /**

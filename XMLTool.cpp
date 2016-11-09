@@ -5,6 +5,8 @@
  * @brief
  */
 
+#include <Poco/NumberParser.h>
+
 #include "device_table.h"
 #include "XMLTool.h"
 
@@ -25,7 +27,7 @@ XMLTool::XMLTool() :
 /**
  * Constructor of XML for cases when we need to create message from incomming data.
  */
-XMLTool::XMLTool(IOTMessage _msg) :
+XMLTool::XMLTool(ServerMessage _msg) :
 	msg(_msg),
 	log(Poco::Logger::get("Adaapp-XML"))
 {
@@ -46,21 +48,25 @@ string XMLTool::createXML(int type) {
 		AttributesImpl attrs;
 		writer.startDocument();
 
-		attrs.addAttribute("", "", "adapter_id", "", msg.adapter_id); // TODO!! remove
-		attrs.addAttribute("", "", "state", "", msg.state);
-		attrs.addAttribute("", "", "protocol_version", "", msg.protocol_version);
-		attrs.addAttribute("", "", "fw_version", "", msg.fw_version);
-		attrs.addAttribute("", "", "time", "", toStringFromLongInt(msg.time));
+		attrs.addAttribute("", "", "adapter_id", "", msg.iotmessage.adapter_id); // TODO!! remove
+		attrs.addAttribute("", "", "state", "", msg.iotmessage.state);
+		attrs.addAttribute("", "", "protocol_version", "", msg.iotmessage.protocol_version);
+		attrs.addAttribute("", "", "fw_version", "", msg.iotmessage.fw_version);
+		attrs.addAttribute("", "", "time", "", toStringFromLongInt(msg.iotmessage.time));
+		if (msg.request_id != 0)
+			attrs.addAttribute("", "", "request_id", "", toStringFromLongInt(msg.request_id));
+		if (msg.response_id != 0)
+			attrs.addAttribute("", "", "response_id", "", toStringFromLongInt(msg.response_id));
 		writer.startElement("", "adapter_server", "", attrs);
 
 		if (type == A_TO_S) {
-			createDevice(&writer, msg.device);  // TODO add fw_version etc?
+			createDevice(&writer, msg.iotmessage.device);  // TODO add fw_version etc?
 		}
 		else if (type == INIT) {
 			writer.characters(" ");
 		}
 		else if (type == PARAM) {
-			createParam(&writer, msg.params, msg.state);
+			createParam(&writer, msg.iotmessage.params, msg.iotmessage.state);
 		}
 
 		writer.endElement("", "adapter_server", "");
@@ -138,8 +144,8 @@ void XMLTool::createParam(XMLWriter* w, CmdParam par, string state){
  * @param str Incomming server message
  * @return Message in Command structure
  */
-Command XMLTool::parseXML(string str) {
-	Command cmd;
+ServerCommand XMLTool::parseXML(string str) {
+	ServerCommand cmd;
 
 	try  {
 		DOMParser parser = DOMParser(0);
@@ -156,23 +162,29 @@ Command XMLTool::parseXML(string str) {
 					for(unsigned int i = 0; i < attributes->length(); i++) {
 						attribute = attributes->item(i);
 						if (attribute->nodeName().compare("protocol_version") == 0) {
-							cmd.protocol_version = attribute->nodeValue();
+							cmd.command.protocol_version = attribute->nodeValue();
 						}
 
 						else if (attribute->nodeName().compare("state") == 0) {
-							cmd.state = attribute->nodeValue();
+							cmd.command.state = attribute->nodeValue();
+						}
+						else if (attribute->nodeName().compare("request_id") == 0) {
+							cmd.request_id = Poco::NumberParser::parse(attribute->nodeValue());
+						}
+						else if (attribute->nodeName().compare("response_id") == 0) {
+							cmd.response_id = Poco::NumberParser::parse(attribute->nodeValue());
 						}
 						// FIXME - id attribute is here only for backward compatibility, it should be removed in Q1/2016
 						else if (attribute->nodeName().compare("euid") == 0 || attribute->nodeName().compare("id") == 0) {
-							cmd.euid = stoull(attribute->nodeValue(), nullptr, 0);
+							cmd.command.euid = stoull(attribute->nodeValue(), nullptr, 0);
 						}
 
 						else if (attribute->nodeName().compare("device_id") == 0) {
-							cmd.device_id = atoll(attribute->nodeValue().c_str());
+							cmd.command.device_id = atoll(attribute->nodeValue().c_str());
 						}
 
 						else if (attribute->nodeName().compare("time") == 0) {
-							cmd.time = atoll(attribute->nodeValue().c_str());
+							cmd.command.time = atoll(attribute->nodeValue().c_str());
 						}
 
 						else {
@@ -184,7 +196,7 @@ Command XMLTool::parseXML(string str) {
 			}
 
 			else if (pNode->nodeName().compare("value") == 0) {
-				if(cmd.state == "getparameters" || cmd.state == "parameters"){
+				if(cmd.command.state == "getparameters" || cmd.command.state == "parameters"){
 					string inner = pNode->innerText();
 					string device_id = "";
 
@@ -197,14 +209,14 @@ Command XMLTool::parseXML(string str) {
 								device_id = toNumFromString(attribute->nodeValue());
 							}
 							if (attribute->nodeName().compare("module_id") == 0) {
-								cmd.params.module_id = toNumFromString(attribute->nodeValue());
+								cmd.command.params.module_id = toNumFromString(attribute->nodeValue());
 							}
 						}
 						attributes->release();
 					}
 
 					if (!inner.empty() || !device_id.empty())
-						cmd.params.value.push_back({inner, device_id});
+						cmd.command.params.value.push_back({inner, device_id});
 
 				}
 				else {
@@ -219,7 +231,7 @@ Command XMLTool::parseXML(string str) {
 								module_id = toNumFromString(attribute->nodeValue());
 							}
 						}
-						cmd.values.push_back({module_id, val});  //TODO Hex number is processed wrongly
+						cmd.command.values.push_back({module_id, val});  //TODO Hex number is processed wrongly
 						attributes->release();
 					}
 				}
@@ -230,10 +242,10 @@ Command XMLTool::parseXML(string str) {
 					for(unsigned int i = 0; i < attributes->length(); i++) {
 						attribute = attributes->item(i);
 						if (attribute->nodeName().compare("param_id") == 0 || attribute->nodeName().compare("id") == 0) {
-							cmd.params.param_id = toIntFromString(attribute->nodeValue());
+							cmd.command.params.param_id = toIntFromString(attribute->nodeValue());
 						}
 						else if (attribute->nodeName().compare("euid") == 0) {
-							cmd.params.euid = toNumFromString(attribute->nodeValue());
+							cmd.command.params.euid = toNumFromString(attribute->nodeValue());
 						}
 					}
 					attributes->release();
@@ -244,7 +256,7 @@ Command XMLTool::parseXML(string str) {
 	}
 	catch (Poco::Exception& e) {
 		log.error("Invalid format of incoming message!" + e.displayText());
-		cmd.state = "error";
+		cmd.command.state = "error";
 	}
 	return cmd;
 }

@@ -33,13 +33,13 @@
 class XMLTool {
 public:
 	XMLTool();
-	XMLTool(IOTMessage);
+	XMLTool(ServerMessage);
 	std::string createXML(int);
-	Command parseXML(std::string);
+	ServerCommand parseXML(std::string);
 	virtual ~XMLTool();
 
 private:
-	IOTMessage msg;
+	ServerMessage msg;
 	void createDevice(Poco::XML::XMLWriter*, Device, bool debug=false, std::string proto="", std::string fw="");
 	void createParam(Poco::XML::XMLWriter* w, CmdParam dev, std::string state);
 	Poco::Logger& log;
