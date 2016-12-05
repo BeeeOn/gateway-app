@@ -194,7 +194,7 @@ inline std::string toStringFromInt(int num) {
 	return (static_cast<std::ostringstream*>( &(std::ostringstream() << num) )->str());
 }
 
-inline std::string toStringFromLongInt(long long int num) {
+inline std::string toStringFromLongInt(euid_t num) {
 	return (static_cast<std::ostringstream*>( &(std::ostringstream() << num) )->str());
 }
 
