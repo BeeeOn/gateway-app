@@ -30,7 +30,7 @@ IOTMessage MQTTDataParser::parseMessage(const string& data) const
 
 		message.state = extractString(parsedJson, "state");
 		device.device_id = toIntFromString(extractString(parsedJson, "device_id"));
-		device.euid = toIntFromString(extractString(parsedJson, "euid"));
+		device.euid = Poco::NumberParser::parseUnsigned64(extractString(parsedJson, "euid"));
 
 		Array::Ptr dataArray = parsedJson->getArray("data");
 
