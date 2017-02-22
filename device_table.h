@@ -18,12 +18,12 @@ inline TT_Table fillDeviceTable() {
 	std::map<int, TT_Device> devices;
 	std::map<int, TT_Module> modules;
 
-	modules.insert( {0, TT_Module(0, 0x02, 4, false, "/100", "*100", {false, 0.0}, {false, 0.0}, {}) } );
-	modules.insert( {1, TT_Module(1, 0x02, 4, false, "/100", "*100", {false, 0.0}, {false, 0.0}, {}) } );
-	modules.insert( {2, TT_Module(2, 0x03, 4, false, "/100", "*100", {false, 0.0}, {false, 0.0}, {}) } );
-	modules.insert( {3, TT_Module(3, 0x08, 2, false, "/1000", "*1000", {false, 0.0}, {false, 0.0}, {}) } );
-	modules.insert( {4, TT_Module(4, 0x09, 1, false, "", "", {false, 0.0}, {false, 0.0}, {}) } );
-	modules.insert( {5, TT_Module(5, 0x0A, 2, true, "", "", {true, 5.0}, {true, 3600.0}, {}) } );
+	modules.insert( {0, TT_Module(0, 0x02, 4, false, "/100", "*100", {false, 0.0}, {false, 0.0}, {}, {}) } );
+	modules.insert( {1, TT_Module(1, 0x02, 4, false, "/100", "*100", {false, 0.0}, {false, 0.0}, {}, {0x7FFFFFFF}) } );
+	modules.insert( {2, TT_Module(2, 0x03, 4, false, "/100", "*100", {false, 0.0}, {false, 0.0}, {}, {}) } );
+	modules.insert( {3, TT_Module(3, 0x08, 2, false, "/1000", "*1000", {false, 0.0}, {false, 0.0}, {}, {}) } );
+	modules.insert( {4, TT_Module(4, 0x09, 1, false, "", "", {false, 0.0}, {false, 0.0}, {}, {}) } );
+	modules.insert( {5, TT_Module(5, 0x0A, 2, true, "", "", {true, 5.0}, {true, 3600.0}, {}, {}) } );
 	devices.insert( {0, TT_Device(0, modules)} ); // insert device to map of devices
 	modules.clear();
 
