@@ -40,6 +40,8 @@ public:
 
 	std::string sendRequest(std::string ip, std::string url = "/values.json");
 
+	std::string sendRequestPost(const std::string &url, const std::string &headerAction, const std::string &msg);
+
 private:
 	Poco::Net::HTTPClientSession http;
 	Poco::Net::HTTPResponse response;

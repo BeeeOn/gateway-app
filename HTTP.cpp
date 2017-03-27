@@ -92,6 +92,41 @@ string HTTPClient::sendRequest(string ip, string url) {
 	return { std::istreambuf_iterator<char>(input), std::istreambuf_iterator<char>() };
 }
 
+string HTTPClient::sendRequestPost(const string &uri, const string &headerAction, const string &msg)
+{
+	http.reset();
+	response.clear();
+	request.clear();
+
+	Poco::URI uri2(uri);
+	http.setHost(uri2.getHost());
+	http.setPort(uri2.getPort());
+	http.setTimeout(receiveTime);
+
+	request.setMethod(Poco::Net::HTTPRequest::HTTP_POST);
+	request.setURI(uri);
+	request.setContentType("text/xml; charset=\"utf-8\"");
+	request.set("SOAPACTION", "\"urn:Belkin:service:basicevent:1#" + headerAction + "\"");
+	request.set("Accept", " ");
+
+	log.information("HTTP: " + uri2.getHost() + "(" + to_string(uri2.getPort()) + ")" + ": " + uri);
+
+	request.setContentLength(msg.length());
+
+	std::ostream& os = http.sendRequest(request);
+	os << msg;
+	istream & input = http.receiveResponse(response);
+
+	const int status = response.getStatus();
+
+	if (status >= 400)
+		log.warning("HTTP: Response: " + to_string(status));
+	else
+		log.information("HTTP: Response: " + to_string(status));
+
+	return { std::istreambuf_iterator<char>(input), std::istreambuf_iterator<char>() };
+}
+
 
 vector<string> HTTPClient::detectNetworkDevices(vector<pair<uint32_t, IPAddress>> ip_ranges) { //,  HTTPDeviceDetector *detector) {
 	vector<string> devices;
