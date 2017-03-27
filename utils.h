@@ -76,6 +76,7 @@
 #define MOD_JABLOTRON       (std::string)"jablotron"
 #define MOD_MQTT_DATA       (std::string)"mqtt_data"
 #define MOD_BLUETOOTH       (std::string)"bluetooth"
+#define MOD_BELKIN_WEMO     (std::string)"belkin_wemo"
 
 #define DEFAULT_LOG_FORMAT	(std::string)"[%Y-%m-%d %H:%M:%S, %q%q, %s, %T] %t"
 
