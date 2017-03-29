@@ -293,6 +293,10 @@ void Aggregator::setMQTTDataModule(shared_ptr<MQTTDataModule> mqtt_data_module)
 	m_mqtt_data_module = mqtt_data_module;
 }
 
+void Aggregator::setBelkinWemo(shared_ptr<Belkin_WeMo> belkinWemo) {
+	m_belkinWemo = belkinWemo;
+}
+
 void Aggregator::parseCmd(Command cmd) {
 	log.information("Agg: parseCmd, Command = " + cmd.state);
 
@@ -332,6 +336,11 @@ void Aggregator::parseCmd(Command cmd) {
 		else if (m_jablotron && m_jablotron->isJablotronModule(cmd.euid)) {
 			log.information("Sending incoming command to Jablotron");
 			m_jablotron->parseCmdFromServer(cmd);
+		}
+		else if (m_belkinWemo && m_belkinWemo->isBelkinDevice(cmd.euid))
+		{
+			log.information("Sending incoming command to belkinWemo");
+			m_belkinWemo->parseCmdFromServer(cmd);
 		}
 		else {
 			// send this to all these modules, because they lack

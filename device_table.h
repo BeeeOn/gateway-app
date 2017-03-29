@@ -333,6 +333,10 @@ inline TT_Table fillDeviceTable() {
 	devices.insert( {35, TT_Device(35, modules)} ); // insert device to map of devices
 	modules.clear();
 
+	modules.insert( {0, TT_Module(0, 0x01, 1, true, "", "", {false, 0.0}, {false, 0.0}, {0, 1}) } );
+	devices.insert( {36, TT_Device(36, modules)} ); // insert device to map of devices
+	modules.clear();
+
 	return devices;
 }
 

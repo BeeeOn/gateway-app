@@ -47,6 +47,7 @@ int main (int, char**) {
 	bool mod_jablotron = false;
 	bool mod_mqtt_data_module = false;
 	bool mod_bluetooth = false;
+	bool mod_belkin_wemo = false;
 
 	AutoPtr<IniFileConfiguration> cfg;
 	AutoPtr<IniFileConfiguration> cfg_logging;
@@ -58,6 +59,7 @@ int main (int, char**) {
 	AutoPtr<IniFileConfiguration> cfg_jablotron;
 	AutoPtr<IniFileConfiguration> cfg_mqtt_data_module;
 	AutoPtr<IniFileConfiguration> cfg_bluetooth;
+	AutoPtr<IniFileConfiguration> cfg_belkin_wemo;
 
 	Poco::Thread agg_thread("Aggregator");
 	Poco::Thread mqtt_thread("MosquittoClient");
@@ -142,6 +144,12 @@ int main (int, char**) {
 	}
 	catch (...) { }
 
+	try {
+		cfg_belkin_wemo = new IniFileConfiguration(string(MODULES_DIR)+string(MOD_BELKIN_WEMO)+".ini");
+		mod_belkin_wemo = cfg_belkin_wemo->getBool(string(MOD_BELKIN_WEMO)+".enabled", false);
+	}
+	catch (...) { }
+
 #ifndef PC_PLATFORM
 	EEPROM_ITEMS eeprom = parseEEPROM();
 
@@ -174,6 +182,7 @@ int main (int, char**) {
 	log.information(MOD_JABLOTRON       + ":       " + ((mod_jablotron) ? " ON" : "OFF"));
 	log.information(MOD_MQTT_DATA       + ":" + ((mod_mqtt_data_module) ? " ON" : "OFF"));
 	log.information(MOD_BLUETOOTH       + ":       " + ((mod_bluetooth) ? " ON" : "OFF"));
+	log.information(MOD_BELKIN_WEMO     + ":     " + ((mod_belkin_wemo) ? " ON" : "OFF"));
 
 	srand(time(0));
 
@@ -212,6 +221,7 @@ int main (int, char**) {
 		shared_ptr<JablotronModule> jablotron;
 		shared_ptr<MQTTDataModule> mqtt_data_module;
 		shared_ptr<Bluetooth> bluetooth;
+		shared_ptr<Belkin_WeMo> belkinWemo;
 
 		std::thread mq_t;
 
@@ -281,6 +291,12 @@ int main (int, char**) {
 			agg->setBluetooth(bluetooth);
 		}
 
+		if (mod_belkin_wemo) {
+			log.information("Creating Belkin_WeMo module.");
+			belkinWemo.reset(new Belkin_WeMo(msg, agg));
+			agg->setBelkinWemo(belkinWemo);
+		}
+
 		agg_thread.start(*agg.get());
 		srv_thread.start(*receiver.get());
 
@@ -312,6 +328,11 @@ int main (int, char**) {
 		if (mod_bluetooth) {
 			log.information("Starting Bluetooth module.");
 			bluetooth.get()->start();
+		}
+
+		if (mod_belkin_wemo) {
+			log.information("Starting Belkin_WeMo module.");
+			belkinWemo.get()->start();
 		}
 
 		/* "Endless" loop waiting for SIGINT/SIGTERM */
@@ -354,6 +375,11 @@ int main (int, char**) {
 		if (mod_bluetooth) {
 			log.information("Stopping Bluetooth module...");
 			bluetooth.get()->stop();
+		}
+
+		if (mod_belkin_wemo) {
+			log.information("Stopping Belkin_WeMo module...");
+			belkinWemo.get()->stop();
 		}
 
 		log.information("Stopping server...");

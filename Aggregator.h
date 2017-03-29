@@ -27,6 +27,7 @@ extern bool quit_global_flag;
 #include <Poco/StringTokenizer.h>
 #include <Poco/Util/IniFileConfiguration.h>
 
+#include "Belkin_WeMo.h"
 #include "Bluetooth.h"
 #include "MQTTDataModule.h"
 #include "Distributor.h"
@@ -127,6 +128,7 @@ public:
 	void setJablotronModule(std::shared_ptr<JablotronModule> jablotron);
 	void setMQTTDataModule(std::shared_ptr<MQTTDataModule> mqtt_data_module);
 	void setBluetooth(std::shared_ptr<Bluetooth> bluetooth);
+	void setBelkinWemo(std::shared_ptr<Belkin_WeMo> belkinWemo);
 
 	void storeCache();
 	void loadCache(void);
@@ -158,6 +160,7 @@ private:
 	std::shared_ptr<JablotronModule> m_jablotron;
 	std::shared_ptr<MQTTDataModule> m_mqtt_data_module;
 	std::shared_ptr<Bluetooth> m_bluetooth;
+	std::shared_ptr<Belkin_WeMo> m_belkinWemo;
 
 	std::thread button_t;
 
