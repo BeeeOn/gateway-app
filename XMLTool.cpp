@@ -146,7 +146,7 @@ Command XMLTool::parseXML(string str) {
 	Command cmd;
 
 	try  {
-		DOMParser parser = DOMParser(0);
+		DOMParser parser = DOMParser();
 		AutoPtr<Document> pDoc = parser.parseString(str);
 		NodeIterator it(pDoc, NodeFilter::SHOW_ELEMENT);
 		Node* pNode = it.nextNode();
