@@ -8,7 +8,13 @@ DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 cd ${DIR}
 
 # Source toolchain for cross compilation
-. /usr/local/beeeon-i686/environment-setup-armv7a-vfp-neon-oe-linux-gnueabi
+if [ -f "/usr/local/beeeon-i686/environment-setup-armv7a-vfp-neon-oe-linux-gnueabi" ]; then
+	. /usr/local/beeeon-i686/environment-setup-armv7a-vfp-neon-oe-linux-gnueabi
+elif [ -f "/usr/beeeon-i686-armv7a-vfp-neon-toolchain-0.9.3+99rc1/environment-setup-armv7a-vfp-neon-oe-linux-gnueabi" ]; then
+	. /usr/beeeon-i686-armv7a-vfp-neon-toolchain-0.9.3+99rc1/environment-setup-armv7a-vfp-neon-oe-linux-gnueabi
+elif [ -f "/usr/local/beeeon-i686-armv7a-vfp-neon-toolchain-0.9.3+99rc1/environment-setup-armv7a-vfp-neon-oe-linux-gnueabi" ]; then
+	. /usr/local/beeeon-i686-armv7a-vfp-neon-toolchain-0.9.3+99rc1/environment-setup-armv7a-vfp-neon-oe-linux-gnueabi
+fi
 
 # -D LEDS_ENABLED
 export BUILD_DIR=build_armv7a
