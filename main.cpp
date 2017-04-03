@@ -9,6 +9,7 @@
 #include <Poco/Util/LoggingConfigurator.h>
 
 #include "main.h"
+#include "WebSocketServerConnection.h"
 
 using namespace std;
 using namespace Poco::Net;
@@ -242,10 +243,20 @@ int main (int, char**) {
 
 		msg.state = "register";
 		msg.time = time(NULL);
-		/* Mandatory component for receiving asynchronous messages from server */
-		shared_ptr<IOTReceiver> receiver (new IOTReceiver(agg, IP_addr_out, port_out, msg, adapter_id));
-		receiver->keepaliveInit(cfg);
-		agg->setTCP(receiver);
+
+		/* Mandatory component for communication with server */
+		shared_ptr<ServerConnector> connection;
+
+		if (cfg->getBool("server.websocket",false)) {
+			connection.reset(new WebSocketServerConnection(agg, cfg, msg));
+		}
+		else {
+			shared_ptr<IOTReceiver> iOTReceiver (new IOTReceiver(agg, IP_addr_out, port_out, msg, adapter_id));
+			iOTReceiver->keepaliveInit(cfg);
+			connection = iOTReceiver;
+		}
+
+		agg->setTCP(connection);
 
 		// BeeeOn PAN coordinator module
 		if (mod_pan) {
@@ -298,7 +309,7 @@ int main (int, char**) {
 		}
 
 		agg_thread.start(*agg.get());
-		srv_thread.start(*receiver.get());
+		srv_thread.start(*connection.get());
 
 		if (mod_vpt) {
 			log.information("Starting VPT module.");

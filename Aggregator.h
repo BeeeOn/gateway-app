@@ -34,12 +34,14 @@ extern bool quit_global_flag;
 #include "MosqClient.h"
 #include "Parameters.h"
 #include "PressureSensor.h"
-#include "utils.h"
-#include "VirtualSensorModule.h"
+#include "ServerConnector.h"
+#include "TCP.h"
 #include "VPT.h"
+#include "VirtualSensorModule.h"
 #include "XMLTool.h"
 #include "TCP.h"
 #include "JablotronModule.h"
+#include "utils.h"
 
 struct Cache_Key {
 
@@ -124,7 +126,7 @@ public:
 	void setPSM(std::shared_ptr<PressureSensor> _psm);
 	void setPAN(std::shared_ptr<PanInterface> _pan);
 	void setVPT(std::shared_ptr<VPTSensor> _vpt);
-	void setTCP(std::shared_ptr<IOTReceiver> _tcp);
+	void setTCP(std::shared_ptr<ServerConnector> _tcp);
 	void setJablotronModule(std::shared_ptr<JablotronModule> jablotron);
 	void setMQTTDataModule(std::shared_ptr<MQTTDataModule> mqtt_data_module);
 	void setBluetooth(std::shared_ptr<Bluetooth> bluetooth);
@@ -155,7 +157,7 @@ private:
 	std::shared_ptr<VirtualSensorModule> vsm;
 	std::shared_ptr<PanInterface> pan;
 	std::shared_ptr<VPTSensor> vpt;
-	std::shared_ptr<IOTReceiver> tcp;
+	std::shared_ptr<ServerConnector> tcp;
 	std::shared_ptr<Parameters> param;
 	std::shared_ptr<JablotronModule> m_jablotron;
 	std::shared_ptr<MQTTDataModule> m_mqtt_data_module;

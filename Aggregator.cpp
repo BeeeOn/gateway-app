@@ -274,7 +274,7 @@ void Aggregator::setVSM(shared_ptr<VirtualSensorModule> _vsm) {
 	vsm = _vsm;
 }
 
-void Aggregator::setTCP(shared_ptr<IOTReceiver> _tcp) {
+void Aggregator::setTCP(shared_ptr<ServerConnector> _tcp) {
 	tcp = _tcp;
 }
 
@@ -315,6 +315,9 @@ void Aggregator::parseCmd(Command cmd) {
 		if (m_mqtt_data_module.get() != nullptr) {
 			m_mqtt_data_module->parseCmdFromServer(cmd);
 		}
+	}
+	else if (cmd.state == "register") {
+		log.information("Gateway registered to server");
 	}
 	else if (cmd.state == "getparameters" || cmd.state == "parameters"){
 		log.information("Incoming GET-PARAMETER command");

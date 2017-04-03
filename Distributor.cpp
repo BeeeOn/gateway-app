@@ -170,7 +170,7 @@ std::string Distributor::convertToCSV(IOTMessage msg, bool full_format) {
 std::string Distributor::convertToXML(IOTMessage msg) {
 	std::string ret;
 
-	unique_ptr<XMLTool> xml(new XMLTool(msg));
+	unique_ptr<XMLTool> xml(new XMLTool(ServerMessage(msg)));
 	if (msg.state == "register")
 		ret = xml->createXML(INIT);
 	else

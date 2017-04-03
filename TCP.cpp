@@ -55,7 +55,7 @@ void referMessageFromServer(shared_ptr<std::queue<std::string>>send_queue,
 
 		try {
 			unique_ptr<XMLTool> xml(new XMLTool());
-			cmd = xml->parseXML(msg);
+			cmd = (xml->parseXML(msg)).command;
 		}
 		catch (Poco::Exception& ex) {
 				log.error("Exception: " + ex.displayText());
@@ -110,7 +110,7 @@ void IOTReceiver::keepaliveInit(IniFileConfiguration * cfg) {
 void IOTReceiver::init() {
 	SocketAddress srv_address(address, port);
 	input_socket.reset(new SecureStreamSocket(srv_address));
-	unique_ptr<XMLTool> xml(new XMLTool(msg));
+	unique_ptr<XMLTool> xml(new XMLTool(ServerMessage(msg)));
 	string message = xml->createXML(INIT);
 	char buffer[2000] = {0};
 	input_socket->sendBytes(message.c_str(), message.length());
@@ -240,7 +240,7 @@ pair<bool, Command> IOTReceiver::sendToServer(IOTMessage _msg) {
 	Command income_cmd;
 	if (_msg.state == "")
 		_msg.state = "data";
-	unique_ptr<XMLTool> xml(new XMLTool(_msg));
+	unique_ptr<XMLTool> xml(new XMLTool(ServerMessage(_msg)));
 	string a_to_s = "";
 	if(_msg.state == "getparameters" || _msg.state == "parameters")
 		a_to_s = xml->createXML(PARAM);
@@ -282,7 +282,7 @@ pair<bool, Command> IOTReceiver::sendToServer(IOTMessage _msg) {
 			log.information("Received message:\n" + message);
 
 			unique_ptr<XMLTool> resp(new XMLTool());
-			income_cmd = resp->parseXML(message);
+			income_cmd = (resp->parseXML(message)).command;
 
 			agg->parseCmd(income_cmd);
 		}

@@ -25,7 +25,7 @@ extern bool quit_global_flag;
 #include <Poco/Util/IniFileConfiguration.h>
 
 #include "Aggregator.h"
-#include "utils.h"
+#include "ServerConnector.h"
 
 
 using MSG_TYPE = std::vector<char>;
@@ -43,7 +43,7 @@ struct KeepALive {
 /**
  * Class for receiving message from server over a SSL connection.
  */
-class IOTReceiver : public Poco::Runnable {
+class IOTReceiver : public ServerConnector {
 private:
 	std::unique_ptr<Poco::Net::SecureStreamSocket> input_socket;
 

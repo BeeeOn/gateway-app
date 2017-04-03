@@ -85,6 +85,7 @@ set (ADAAPP_SOURCES
 	VirtualSensor.cpp
 	VirtualSensorModule.cpp
 	VirtualSensorValue.cpp
+	WebSocketServerConnection.cpp
 	XMLTool.cpp
 	main.cpp
 )
