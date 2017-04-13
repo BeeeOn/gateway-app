@@ -258,6 +258,10 @@ pair<bool, Command> Aggregator::sendData(IOTMessage _msg) {
 	return retval;
 }
 
+void Aggregator::setLedModule(shared_ptr<LedModule> lm) {
+	ledModule = lm;
+}
+
 void Aggregator::setPAN(shared_ptr<PanInterface> _pan) {
 	pan = _pan;
 }
@@ -327,6 +331,10 @@ void Aggregator::parseCmd(Command cmd) {
 		if (psm && psm->belongTo(cmd.euid)) {
 			log.information("Sending incoming command to PSM");
 			psm->parseCmdFromServer(cmd);
+		}
+		else if (ledModule && ledModule->belongTo(cmd.euid)) {
+			log.information("Sending incoming command to Led Module");
+			ledModule->parseCmdFromServer(cmd);
 		}
 		else if (vsm && vsm->isVirtualDevice(cmd.euid)) {
 			log.information("Sending incoming command to VSM");

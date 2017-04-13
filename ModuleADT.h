@@ -34,6 +34,7 @@ public:
 		virtual void threadFunction() = 0;							// this is thread function for running module service - makes whole class abstract
 
 protected:
+	Poco::AutoPtr<Poco::Util::IniFileConfiguration> cfg;
 	std::shared_ptr<Aggregator> agg;
 	bool inicialized = false;
 	Poco::Logger& log;

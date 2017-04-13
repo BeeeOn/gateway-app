@@ -253,6 +253,12 @@ inline TT_Table fillDeviceTable() {
 	devices.insert( {22, TT_Device(22, modules)} ); // insert device to map of devices
 	modules.clear();
 
+	modules.insert( {0, TT_Module(0, 0x01, 1, true, "", "", {false, 0.0}, {false, 0.0}, {0, 1}) } );
+	modules.insert( {1, TT_Module(1, 0x01, 1, true, "", "", {false, 0.0}, {false, 0.0}, {0, 1}) } );
+	modules.insert( {2, TT_Module(2, 0x14, 4, true, "", "", {true, 0.0}, {true, 101.0}, {}) } );
+	devices.insert( {24, TT_Device(24, modules)} ); // insert device to map of devices
+	modules.clear();
+
 	modules.insert( {0, TT_Module(0, 0x01, 1, false, "", "", {false, 0.0}, {false, 0.0}, {0, 1, 2}) } );
 	modules.insert( {1, TT_Module(1, 0x08, 2, false, "/1000", "*1000", {false, 0.0}, {false, 0.0}, {}) } );
 	devices.insert( {25, TT_Device(25, modules)} ); // insert device to map of devices
@@ -331,7 +337,6 @@ inline TT_Table fillDeviceTable() {
 
 	modules.insert( {0, TT_Module(0, 0x01, 1, false, "", "", {false, 0.0}, {false, 0.0}, {0, 1}) } );
 	devices.insert( {35, TT_Device(35, modules)} ); // insert device to map of devices
-	modules.clear();
 
 	modules.insert( {0, TT_Module(0, 0x01, 1, true, "", "", {false, 0.0}, {false, 0.0}, {0, 1}) } );
 	devices.insert( {36, TT_Device(36, modules)} ); // insert device to map of devices

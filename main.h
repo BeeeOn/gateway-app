@@ -26,6 +26,7 @@
 #include "Belkin_WeMo.h"
 #include "Bluetooth.h"
 #include "IOcontrol.h"
+#include "LedModule.h"
 #include "MosqClient.h"
 #include "PanInterface.h"
 #include "TCP.h"

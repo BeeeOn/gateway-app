@@ -68,6 +68,7 @@
 #define MOD_PAN             (std::string)"pan"
 #define MOD_VIRTUAL_SENSOR  (std::string)"virtual_sensor"
 #define MOD_PRESSURE_SENSOR (std::string)"pressure_sensor"
+#define MOD_LED_MODULE      (std::string)"led_module"
 #define MOD_VPT_SENSOR      (std::string)"vpt_sensor"
 #define MOD_MQTT            (std::string)"mqtt"
 #define MOD_TCP         	(std::string)"tcp"

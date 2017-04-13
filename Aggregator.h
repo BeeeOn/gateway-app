@@ -31,6 +31,7 @@ extern bool quit_global_flag;
 #include "Bluetooth.h"
 #include "MQTTDataModule.h"
 #include "Distributor.h"
+#include "LedModule.h"
 #include "MosqClient.h"
 #include "Parameters.h"
 #include "PressureSensor.h"
@@ -124,6 +125,7 @@ public:
 
 	void setVSM(std::shared_ptr<VirtualSensorModule> _vsm);
 	void setPSM(std::shared_ptr<PressureSensor> _psm);
+	void setLedModule(std::shared_ptr<LedModule> lm);
 	void setPAN(std::shared_ptr<PanInterface> _pan);
 	void setVPT(std::shared_ptr<VPTSensor> _vpt);
 	void setTCP(std::shared_ptr<ServerConnector> _tcp);
@@ -155,6 +157,7 @@ private:
 
 	std::shared_ptr<PressureSensor> psm;
 	std::shared_ptr<VirtualSensorModule> vsm;
+	std::shared_ptr<LedModule> ledModule;
 	std::shared_ptr<PanInterface> pan;
 	std::shared_ptr<VPTSensor> vpt;
 	std::shared_ptr<ServerConnector> tcp;
